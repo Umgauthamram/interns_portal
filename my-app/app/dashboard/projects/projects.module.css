@@ -1,0 +1,100 @@
+.container {
+    max-width: 800px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 2rem;
+    min-height: 50vh;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 150px;
+}
+
+.tab:hover {
+    color: #0072FF;
+}
+
+.active {
+    color: #0072FF;
+    border-bottom: 2px solid #0072FF;
+}
+
+.content {
+    padding: 1rem;
+}
+
+.title {
+    margin-bottom: 1rem;
+}
+
+.status {
+    padding: 0.5rem 1rem;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border-radius: 99px;
+    display: inline-block;
+    font-weight: 600;
+}
+
+.techStack {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.techStack span {
+    background: rgba(0, 114, 255, 0.1);
+    color: #0072FF;
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.875rem;
+}
+
+.form {
+    display: flex;
+    gap: 1rem;
+    flex-direction: column;
+    max-width: 600px;
+}
+
+.input,
+.textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.textarea {
+    min-height: 120px;
+}
+
+.options {
+    display: flex;
+    gap: 2rem;
+}
+
+.optionCard {
+    flex: 1;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    min-width: 300px;
+}

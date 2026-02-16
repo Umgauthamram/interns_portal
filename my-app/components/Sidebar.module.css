@@ -1,0 +1,81 @@
+.sidebar {
+    width: 280px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    transition: width 0.3s;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+}
+
+.highlight {
+    color: #0072FF;
+    /* Fallback */
+    background: var(--primary-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.navItem {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.navItem:hover {
+    background: var(--bg-hover);
+    color: #0072FF;
+    border-color: rgba(0, 114, 255, 0.2);
+}
+
+.active {
+    background: rgba(0, 114, 255, 0.1);
+    color: #0072FF;
+    border: 1px solid rgba(0, 114, 255, 0.3);
+    box-shadow: 0 4px 6px -1px rgba(0, 114, 255, 0.1);
+}
+
+.footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+.logoutBtn {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--error);
+    color: var(--error);
+    background: transparent;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.logoutBtn:hover {
+    background: rgba(239, 68, 68, 0.1);
+}

@@ -1,0 +1,198 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-primary);
+    /* Use global theme background */
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.formCard {
+    background: var(--bg-panel);
+    /* Use global panel background */
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    width: 100%;
+    max-width: 1000px;
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: var(--glass-effect);
+    -webkit-backdrop-filter: var(--glass-effect);
+    display: flex;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Panel Layout */
+.leftPanel {
+    flex: 0 0 40%;
+    padding: 3rem;
+    background: var(--bg-secondary);
+    /* Use secondary background */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: var(--text-primary);
+    border-right: 1px solid var(--border-color);
+}
+
+.rightPanel {
+    flex: 1;
+    padding: 3rem;
+    background: var(--bg-panel);
+    position: relative;
+}
+
+/* Typography */
+.logo {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.highlight {
+    background: var(--primary-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.stepTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+}
+
+/* Form Elements */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputGroup label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.inputGroup select,
+.inputGroup option,
+.inputGroup input,
+.inputGroup textarea {
+    padding: 0.875rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
+    outline: none;
+    border-color: #0072FF;
+    box-shadow: 0 0 0 2px rgba(0, 114, 255, 0.2);
+}
+
+/* Progress Bar */
+.progressBarContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--border-color);
+}
+
+.progressBarFill {
+    height: 100%;
+    background: var(--primary-gradient);
+    transition: width 0.4s ease;
+}
+
+/* Buttons */
+.buttonGroup {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.btnBack {
+    color: #0072FF;
+    background: transparent;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.submitBtn {
+    background: var(--primary-gradient);
+    color: #fff;
+    padding: 0.75rem 2rem;
+    border-radius: 99px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+.submitBtn:hover {
+    opacity: 0.9;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.grid3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .formCard {
+        flex-direction: column;
+    }
+
+    .leftPanel {
+        padding: 2rem;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .rightPanel {
+        padding: 2rem;
+    }
+
+    .grid2,
+    .grid3 {
+        grid-template-columns: 1fr;
+    }
+}
