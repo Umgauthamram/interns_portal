@@ -4,34 +4,49 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-hot-toast";
 
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = ["/login", "/internship/register"];
+
 export function SessionManager() {
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
         const checkSession = () => {
-            // skip check on login/register pages
-            if (pathname === "/login" || pathname === "/internship/register" || pathname === "/") {
+            // Skip check on public routes
+            if (PUBLIC_ROUTES.some(route => pathname.startsWith(route)) || pathname === "/") {
                 return;
             }
 
             const loginTimestamp = localStorage.getItem("loginTimestamp");
-            if (loginTimestamp) {
-                const now = Date.now();
-                const threeHoursInMs = 3 * 60 * 60 * 1000;
+            const userEmail = localStorage.getItem("userEmail");
 
-                if (now - parseInt(loginTimestamp) > threeHoursInMs) {
-                    localStorage.clear();
-                    toast.error("Session expired. Please log in again.");
-                    router.push("/login");
-                }
+            // If no login info, redirect to login (unless on public route)
+            if (!userEmail || !loginTimestamp) {
+                localStorage.clear();
+                document.cookie = "userRole=; path=/; max-age=0";
+                document.cookie = "userEmail=; path=/; max-age=0";
+                router.push("/login");
+                return;
+            }
+
+            // Check for session expiry (3 hours)
+            const now = Date.now();
+            const threeHoursInMs = 3 * 60 * 60 * 1000;
+
+            if (now - parseInt(loginTimestamp) > threeHoursInMs) {
+                localStorage.clear();
+                document.cookie = "userRole=; path=/; max-age=0";
+                document.cookie = "userEmail=; path=/; max-age=0";
+                toast.error("Session expired. Please log in again.");
+                router.push("/login");
             }
         };
 
         // Check on mount and on route change
         checkSession();
 
-        // Optional: periodic check every minute
+        // Periodic check every minute
         const interval = setInterval(checkSession, 60000);
         return () => clearInterval(interval);
     }, [pathname, router]);

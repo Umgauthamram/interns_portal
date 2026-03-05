@@ -50,6 +50,8 @@ export function Sidebar() {
 
     const handleLogout = () => {
         localStorage.clear();
+        document.cookie = "userRole=; path=/; max-age=0";
+        document.cookie = "userEmail=; path=/; max-age=0";
         router.push("/login");
     };
 

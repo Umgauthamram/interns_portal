@@ -14,7 +14,7 @@ export async function GET(req) {
             return NextResponse.json({ message: "Email query parameter required" }, { status: 400 });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).select('-password');
 
         if (!user) {
             return NextResponse.json({ message: "User not found" }, { status: 404 });

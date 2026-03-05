@@ -3,12 +3,14 @@
 import { Sun, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import Link from "next/link";
 import Script from "next/script";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { WarpBackground } from "@/components/ui/warp-background";
 import { DropdownDatePicker } from "@/components/ui/dropdown-date-picker";
 
 export default function RegistrationPage() {
+    const router = useRouter();
     const [step, setStep] = useState(1);
     const totalSteps = 4;
 
@@ -36,6 +38,14 @@ export default function RegistrationPage() {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
+    useEffect(() => {
+        const userEmail = typeof window !== 'undefined' ? localStorage.getItem("userEmail") : null;
+        const userRole = typeof window !== 'undefined' ? localStorage.getItem("userRole") : null;
+        if (userEmail && userRole) {
+            router.push(userRole === 'admin' ? '/admin' : '/dashboard');
+        }
+    }, [router]);
 
     const handleNext = (e) => {
         e.preventDefault();
@@ -83,14 +93,10 @@ export default function RegistrationPage() {
 
             if (response.ok) {
                 toast.dismiss(loadingToast);
-                toast.success("Registration Successful!");
-
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('userEmail', formData.email);
-                }
+                toast.success("Registration Successful! Please log in.");
 
                 setTimeout(() => {
-                    window.location.href = "/dashboard";
+                    window.location.href = "/login";
                 }, 1500);
             } else {
                 toast.dismiss(loadingToast);
@@ -117,18 +123,16 @@ export default function RegistrationPage() {
     };
 
     return (
-        <div className="relative min-h-screen w-screen bg-black font-sans flex items-center justify-center overflow-hidden">
+        <div className="relative min-h-screen w-screen bg-slate-50 font-sans flex items-center justify-center overflow-hidden">
 
-            {/* Background Image */}
-            <div className="absolute inset-0 w-full h-full z-0">
-                <img
-                    src="/background1.jpg"
-                    alt="Background"
-                    className="w-full h-full object-cover opacity-100"
-                />
+            {/* Premium Animated Gradient Blobs */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-purple-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '7s'}}></div>
+                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-sky-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '5s'}}></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] bg-indigo-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '9s'}}></div>
             </div>
 
-            <div className="w-full max-w-3xl mx-auto space-y-8 bg-white/95 backdrop-blur-md lg:px-12 pb-12 pt-16 rounded-2xl shadow-2xl border border-white/20 min-h-[500px] flex flex-col justify-center relative z-10 transition-all overflow-hidden m-4">
+            <div className="w-full max-w-3xl mx-auto space-y-8 bg-white/70 backdrop-blur-3xl lg:px-12 pb-12 pt-16 rounded-[2.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-white/60 min-h-[500px] flex flex-col justify-center relative z-10 transition-all overflow-hidden m-4">
 
                 {/* Top Progress Bar */}
                 <div className="absolute top-0 left-0 w-full bg-gray-100 h-1.5">

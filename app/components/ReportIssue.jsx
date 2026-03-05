@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Bug, Send, X, MessageSquare, Lightbulb, Settings, HelpCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { toast } from "react-hot-toast";
 
 export function ReportIssue() {

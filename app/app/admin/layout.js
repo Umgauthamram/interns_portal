@@ -11,15 +11,45 @@ export default function AdminLayout({ children }) {
     const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
-        const role = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
-        const email = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+        const checkAuth = async () => {
+            const role = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
+            const email = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
 
-        if (!role || !email || (role !== 'admin' && role !== 'developer')) {
-            toast.error("Unauthorized Access: Admins only.");
-            router.push("/login?redirect=/admin");
-        } else {
-            setAuthorized(true);
-        }
+            if (!role || !email || role !== 'admin') {
+                toast.error("Unauthorized Access: Admins only.");
+                router.push("/login?redirect=/admin");
+                return;
+            }
+
+            // Verify with server
+            try {
+                const res = await fetch(`/api/user/me?email=${email}`);
+                if (res.ok) {
+                    const user = await res.json();
+                    if (user.role !== 'admin') {
+                        toast.error("Unauthorized Access: Admins only.");
+                        localStorage.clear();
+                        document.cookie = "userRole=; path=/; max-age=0";
+                        document.cookie = "userEmail=; path=/; max-age=0";
+                        router.push("/login");
+                        return;
+                    }
+                    setAuthorized(true);
+                } else {
+                    localStorage.clear();
+                    document.cookie = "userRole=; path=/; max-age=0";
+                    document.cookie = "userEmail=; path=/; max-age=0";
+                    router.push("/login");
+                }
+            } catch (error) {
+                localStorage.clear();
+                document.cookie = "userRole=; path=/; max-age=0";
+                document.cookie = "userEmail=; path=/; max-age=0";
+                router.push("/login");
+            }
+        };
+
+        checkAuth();
     }, [router]);
 
     if (!authorized) {

@@ -12,7 +12,9 @@ import {
     Settings,
     LogOut,
     Shield,
-    Calendar
+    Calendar,
+    UserPlus,
+    Bug
 } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -20,8 +22,10 @@ const sidebarItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin" },
     { icon: Layout, label: "Projects", href: "/admin/projects" },
     { icon: Users, label: "Users", href: "/admin/users" },
+    { icon: UserPlus, label: "Manage Admins", href: "/admin/manage-admins" },
     { icon: Layout, label: "Content", href: "/admin/content" },
     { icon: Calendar, label: "Schedule", href: "/admin/schedule" },
+    { icon: Bug, label: "Tickets", href: "/admin/tickets" },
     { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];
 
@@ -31,6 +35,8 @@ export function AdminSidebar() {
 
     const handleLogout = () => {
         localStorage.clear();
+        document.cookie = "userRole=; path=/; max-age=0";
+        document.cookie = "userEmail=; path=/; max-age=0";
         router.push("/login");
     };
 
