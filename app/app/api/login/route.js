@@ -30,6 +30,15 @@ export async function POST(req) {
             return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
         }
 
+        // Block terminated users
+        if (user.status === 'Terminated') {
+            return NextResponse.json({
+                message: "Your account has been terminated.",
+                contact: "gautham@digitalsouth.co.in",
+                terminated: true
+            }, { status: 403 });
+        }
+
         // Return user info (without password)
         const userObj = user.toObject();
         delete userObj.password;

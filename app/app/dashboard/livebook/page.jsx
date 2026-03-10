@@ -34,7 +34,45 @@ const SEMESTERS = [
     { id: 1, name: "Semester 1", status: "Completed", icons: [FileText, LayoutGrid, Database] },
 ];
 
-// Removed MOCK_COURSES and MOCK_LEARNING_PATH
+// Format content helper
+const formatBlockContent = (content) => {
+    if (!content) return null;
+    if (/<[a-z][\s\S]*>/i.test(content)) {
+        return <div dangerouslySetInnerHTML={{ __html: content }} className="prose max-w-none text-gray-700" />;
+    }
+    return (
+        <div className="space-y-2">
+            {content.split('\n').map((line, j) => {
+                if (!line.trim()) return <div key={j} className="h-2" />;
+                if (line.includes(':') && line.split(':')[0].split(' ').length <= 4) {
+                    const parts = line.split(':');
+                    const key = parts[0];
+                    const rest = parts.slice(1).join(':');
+                    if (rest.trim()) {
+                        return (
+                            <p key={j} className="text-[15px] text-gray-700 leading-relaxed">
+                                <strong className="text-black font-bold">{key}:</strong>{rest}
+                            </p>
+                        );
+                    } else {
+                        return <h4 key={j} className="text-[16px] font-black text-gray-900 mt-4 tracking-tight uppercase">{line}</h4>;
+                    }
+                }
+                if (line.trim().match(/^[-*•]\s+/)) {
+                    return <li key={j} className="ml-6 text-[15px] text-gray-700 leading-relaxed list-disc">{line.replace(/^[-*•]\s+/, '')}</li>;
+                }
+                if (line.trim().match(/^\d+\.\s+/)) {
+                    return <li key={j} className="ml-6 text-[15px] text-gray-700 leading-relaxed list-decimal">{line.replace(/^\d+\.\s+/, '')}</li>;
+                }
+                // Short lines without punctuation might be headers
+                if (line.length > 2 && line.length < 40 && !line.includes('.') && !line.includes(',')) {
+                    return <h4 key={j} className="text-[16px] font-black text-gray-900 mt-4 tracking-tight uppercase">{line}</h4>;
+                }
+                return <p key={j} className="text-[15px] text-gray-700 leading-relaxed">{line}</p>;
+            })}
+        </div>
+    );
+};
 
 export default function LiveBookDashboard() {
     const [view, setView] = useState("library"); // library, overview, lesson
@@ -64,14 +102,6 @@ export default function LiveBookDashboard() {
 
     return (
         <div className="relative min-h-screen">
-            {/* Subtle Dot Grid Background */}
-            <div className="fixed inset-0 pointer-events-none z-[-1] opacity-[0.2]"
-                style={{
-                    backgroundImage: `radial-gradient(#000 1px, transparent 1px)`,
-                    backgroundSize: '32px 32px'
-                }}
-            />
-
             <div className="max-w-[1600px] mx-auto px-10 py-8">
                 <AnimatePresence mode="wait">
                     {view === "library" && (
@@ -112,30 +142,27 @@ export default function LiveBookDashboard() {
                                                 </div>
                                             </div>
 
-                                            <div className="pt-10 border-t border-amber-50 flex items-center justify-between relative z-10">
-                                                <div className="flex items-center gap-6">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <Diamond className="w-4 h-4 text-amber-400" />
-                                                        <span className="text-[11px] font-black text-gray-900 tracking-widest">{course.credits || 6}</span>
+                                            <div className="pt-8 border-t border-amber-50/50 flex items-center justify-between relative z-10">
+                                                <div className="flex items-center gap-5">
+                                                    <div className="flex items-center gap-2" title="Modules">
+                                                        <Layers className="w-3.5 h-3.5 text-amber-400" />
+                                                        <span className="text-[12px] font-black text-gray-900 tracking-tight">{course.modules?.length || 0}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-2.5">
-                                                        <Layers className="w-4 h-4 text-amber-400" />
-                                                        <span className="text-[11px] font-black text-gray-900 tracking-widest">{course.modules?.length || 0}</span>
+                                                    <div className="flex items-center gap-2" title="Topics">
+                                                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                                                        <span className="text-[12px] font-black text-gray-900 tracking-tight">{topics.filter(t => t.course === course.title).length}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-2.5">
-                                                        <BookOpen className="w-4 h-4 text-amber-400" />
-                                                        <span className="text-[11px] font-black text-gray-900 tracking-widest">{topics.filter(t => t.course === course.title).length}</span>
+                                                    <div className="flex items-center gap-2" title="Units">
+                                                        <Zap className="w-3.5 h-3.5 text-amber-400" />
+                                                        <span className="text-[12px] font-black text-gray-900 tracking-tight">
+                                                            {topics.filter(t => t.course === course.title).reduce((acc, b) => acc + (b.blocks?.length || 0), 0)}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-xl border border-amber-100/50 shadow-sm">
-                                                    <div className="relative w-7 h-7">
-                                                        <svg className="w-full h-full transform -rotate-90">
-                                                            <circle cx="14" cy="14" r="11" fill="none" stroke="#fef3c7" strokeWidth="2.5" />
-                                                            <circle cx="14" cy="14" r="11" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="70" strokeDashoffset={70 - (70 * (course.progress || 0) / 100)} strokeLinecap="round" />
-                                                        </svg>
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-amber-600 ml-0.5">{course.progress || 0}%</span>
-                                                </div>
+
+                                                <button className="p-2.5 bg-white border border-amber-100 rounded-xl text-amber-500 hover:bg-amber-500 hover:text-white transition-all shadow-sm">
+                                                    <ArrowRight className="w-4 h-4" />
+                                                </button>
                                             </div>
 
                                             <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:opacity-[0.06] transition-opacity pointer-events-none transform -rotate-12 translate-x-4 -translate-y-4">
@@ -182,24 +209,27 @@ export default function LiveBookDashboard() {
                                     {/* Central Line Removed */}
 
                                     {selectedCourse?.modules?.map((mod, idx) => (
-                                        <div key={mod.id} className="space-y-16">
+                                        <div key={mod.id} className="mb-12 bg-white/60 backdrop-blur-3xl border border-white/80 shadow-2xl shadow-gray-200/40 rounded-[2.5rem] p-8 lg:p-10 relative overflow-hidden group/module transition-all duration-500 hover:bg-white/90 w-full flex flex-col">
+                                            {/* Decorative Background for Module */}
+                                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-gray-100/80 via-purple-50/40 to-transparent blur-[60px] rounded-full opacity-60 -translate-y-10 translate-x-10 pointer-events-none transition-opacity duration-500 group-hover/module:opacity-100" />
+
                                             {/* Module Header */}
-                                            <div className="flex gap-8 items-start relative z-10">
-                                                <div className="w-20 h-20 bg-white border-2 border-[#fafafa] rounded-[1.5rem] flex flex-col items-center justify-center shadow-xl shadow-gray-200/50 flex-shrink-0">
-                                                    <span className="text-[7px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Module</span>
-                                                    <span className="text-3xl font-black text-gray-900 leading-none">{idx + 1}</span>
+                                            <div className="flex gap-6 md:gap-8 items-start relative z-10 w-full">
+                                                <div className="w-16 h-16 md:w-20 md:h-20 bg-white border border-gray-100 rounded-[1.2rem] md:rounded-[1.5rem] flex flex-col items-center justify-center shadow-lg shadow-gray-200/30 flex-shrink-0 group-hover/module:border-gray-100 transition-colors duration-500">
+                                                    <span className="text-[6px] md:text-[7px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">Module</span>
+                                                    <span className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{idx + 1}</span>
                                                 </div>
-                                                <div className="flex-1 space-y-3 pt-2">
+                                                <div className="flex-1 space-y-2 md:space-y-3 pt-1 md:pt-2 w-full">
                                                     <div
                                                         onClick={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}
-                                                        className="flex items-center justify-between cursor-pointer group/header"
+                                                        className="flex items-center justify-between cursor-pointer group/header w-full"
                                                     >
-                                                        <h3 className="text-lg font-black text-gray-900 uppercase tracking-tighter group-hover/header:text-black transition-colors">{mod.title}</h3>
-                                                        <ChevronDown
-                                                            className={`w-5 h-5 text-gray-300 transition-transform ${expandedModule === mod.id ? 'rotate-180' : ''}`}
-                                                        />
+                                                        <h3 className="text-lg md:text-xl font-black text-gray-900 uppercase tracking-tight group-hover/header:text-black transition-colors duration-300">{mod.title}</h3>
+                                                        <div className={`p-2 rounded-full transition-all duration-300 shadow-sm ${expandedModule === mod.id ? 'bg-gray-100 text-black shadow-gray-200/50' : 'bg-white border border-gray-100 text-gray-400 group-hover/header:bg-gray-50'}`}>
+                                                            <ChevronDown className={`w-5 h-5 transition-transform duration-500 ${expandedModule === mod.id ? 'rotate-180' : ''}`} />
+                                                        </div>
                                                     </div>
-                                                    <p className="text-[12px] text-gray-400 leading-relaxed font-medium opacity-80 max-w-xl">{mod.desc}</p>
+                                                    <p className="text-[11px] md:text-[12px] text-gray-500 leading-relaxed font-medium opacity-90 max-w-2xl">{mod.desc}</p>
                                                 </div>
                                             </div>
 
@@ -210,8 +240,11 @@ export default function LiveBookDashboard() {
                                                         initial={{ height: 0, opacity: 0 }}
                                                         animate={{ height: "auto", opacity: 1 }}
                                                         exit={{ height: 0, opacity: 0 }}
-                                                        className="space-y-14 ml-10 pl-4 overflow-hidden"
+                                                        className="space-y-4 md:space-y-6 mt-8 md:mt-12 ml-4 md:ml-10 relative flex-1"
                                                     >
+                                                        {/* Line connecting lessons */}
+                                                        <div className="absolute left-[23px] top-6 bottom-6 w-px bg-gradient-to-b from-gray-200 via-gray-200 to-transparent z-0 hidden md:block" />
+
                                                         {topics.filter(t => t.course === selectedCourse.title && t.module === mod.title).map((lesson, lIdx) => (
                                                             <div
                                                                 key={lesson._id}
@@ -219,18 +252,25 @@ export default function LiveBookDashboard() {
                                                                     setSelectedLesson(lesson);
                                                                     setView("lesson");
                                                                 }}
-                                                                className="flex gap-12 items-start group cursor-pointer relative"
+                                                                className="flex gap-6 md:gap-8 items-start group cursor-pointer relative p-4 md:p-6 bg-transparent hover:bg-white border border-transparent hover:border-gray-100 rounded-3xl transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1 w-full"
                                                             >
                                                                 {/* Lesson Bubble */}
-                                                                <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center text-[12px] font-black transition-all duration-300 shadow-xl shadow-black/20 z-10">
+                                                                <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-900 group-hover:bg-black text-white rounded-[1rem] flex items-center justify-center text-[12px] md:text-[14px] font-black transition-all duration-500 shadow-lg shadow-black/10 group-hover:shadow-black/30 group-hover:scale-110 z-10 shrink-0 ring-4 ring-white">
                                                                     {idx + 1}.{lIdx + 1}
                                                                 </div>
 
-                                                                <div className="flex-1 space-y-1 pt-1 border-b border-gray-50 pb-6 group-hover:border-black/10 transition-all">
-                                                                    <h4 className="text-sm font-black text-gray-800 uppercase tracking-tight group-hover:text-black">{lesson.title}</h4>
-                                                                    <p className="text-[10px] text-gray-400 font-medium group-hover:text-gray-600 transition-colors leading-relaxed opacity-70">
-                                                                        {lesson.blocks?.find(b => b.type === 'text')?.content || 'Review module intel.'}
+                                                                <div className="flex-1 space-y-1.5 md:space-y-2 pt-0.5 md:pt-1">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <h4 className="text-sm md:text-base font-black text-gray-800 uppercase tracking-tight group-hover:text-black transition-colors duration-300">{lesson.title}</h4>
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-black opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                                    </div>
+                                                                    <p className="text-[10px] md:text-[12px] text-gray-500 font-medium group-hover:text-gray-600 transition-colors duration-300 leading-relaxed line-clamp-2 pr-4 md:pr-12">
+                                                                        {lesson.blocks?.find(b => b.type === 'text')?.content || 'Dive into this chapter to uncover key concepts and specialized intel.'}
                                                                     </p>
+                                                                </div>
+
+                                                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-4 group-hover:translate-x-0 absolute right-6 top-1/2 -translate-y-1/2 shadow-inner shadow-gray-200/50">
+                                                                    <ArrowRight className="w-4 h-4 text-black" />
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -262,22 +302,22 @@ export default function LiveBookDashboard() {
                                 </div>
                             </div>
 
-                            <div className="max-w-4xl mx-auto space-y-10 px-6 lg:px-10 pt-4 pb-16 relative overflow-hidden text-left">
+                            <div className="max-w-4xl mx-auto mt-6 bg-white border border-gray-100 shadow-2xl shadow-gray-200/40 rounded-[3rem] space-y-10 p-8 md:p-10 lg:p-16 relative overflow-hidden text-left mb-20">
                                 {/* Decorative elements */}
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-gray-50 rounded-full blur-[100px] opacity-50 -translate-x-20 -translate-y-20 pointer-events-none" />
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-gray-100/60 via-purple-50/30 to-transparent rounded-full blur-[100px] opacity-80 -translate-y-20 pointer-events-none" />
 
-                                <div className="space-y-4 text-left relative z-10">
-                                    <div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg shadow-black/20">3.4</div>
-                                    <h1 className="text-[28px] font-black text-gray-900 uppercase tracking-tighter leading-none">{selectedLesson?.title || "Assignment: Analyzing a Multilingual Ad"}</h1>
+                                <div className="space-y-6 text-left relative z-10">
+                                    <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center text-[12px] font-black shadow-lg shadow-black/30 ring-4 ring-gray-100"><BookOpen className="w-5 h-5" /></div>
+                                    <h1 className="text-[32px] md:text-[40px] font-black text-gray-900 uppercase tracking-tighter leading-[1.1]">{selectedLesson?.title || "Lesson"}</h1>
                                 </div>
-                                <div className="h-px bg-gray-100 w-full relative z-10" />
+                                <div className="h-px bg-gradient-to-r from-gray-200 via-gray-100 to-transparent w-full relative z-10" />
 
                                 <div className="space-y-10 relative z-10">
                                     {selectedLesson?.blocks?.map((block, i) => (
                                         <div key={i} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                                             {block.type === 'text' ? (
                                                 <div className="h-full flex flex-col justify-center">
-                                                    <p className="text-[16px] text-gray-600 font-medium leading-relaxed text-left whitespace-pre-wrap">{block.content}</p>
+                                                    {formatBlockContent(block.content)}
                                                 </div>
                                             ) : block.type === 'image' && block.content ? (
                                                 <div className="w-full rounded-[1.5rem] overflow-hidden bg-gray-50 shadow-sm border border-gray-100">
@@ -295,10 +335,7 @@ export default function LiveBookDashboard() {
                                         </div>
                                     ))}
                                 </div>
-
-                                <button className="w-full py-4 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-[0.3em] shadow-lg hover:scale-[1.01] active:scale-95 transition-all relative z-10 flex items-center justify-center gap-4 group">
-                                    <Sparkles className="w-3.5 h-3.5 group-hover:animate-spin" /> Launch Assignment Protocol
-                                </button>
+                                {/* Launch Assignment Protocol removed */}
                             </div>
                         </motion.div>
                     )}
@@ -314,3 +351,4 @@ export default function LiveBookDashboard() {
         </div >
     );
 }
+

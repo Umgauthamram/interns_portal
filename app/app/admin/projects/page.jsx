@@ -17,7 +17,9 @@ import {
     Download,
     Mail,
     Bell,
-    RefreshCw
+    RefreshCw,
+    Trash2,
+    Edit3
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
@@ -48,6 +50,7 @@ export default function AdminProjectsPage() {
     const [activeTab, setActiveTab] = useState('requests'); // default to requests
     const [available, setAvailable] = useState([]);
     const [requests, setRequests] = useState([]);
+    const [presetRequests, setPresetRequests] = useState([]);
     const [tracks, setTracks] = useState(TRACK_CONFIG);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -61,6 +64,8 @@ export default function AdminProjectsPage() {
     const [selectedCategory, setSelectedCategory] = useState("CODING");
     const [newTrackCategory, setNewTrackCategory] = useState("CODING");
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [deleteTrackTarget, setDeleteTrackTarget] = useState(null); // { category, index, track }
+    const [openTrackMenuIdx, setOpenTrackMenuIdx] = useState(null); // "CODING-0" etc.
 
     const fetchAll = async () => {
         setIsRefreshing(true);
@@ -70,14 +75,20 @@ export default function AdminProjectsPage() {
                 fetch('/api/admin/projects/pool')
             ]);
 
-            if (reqRes.ok) {
-                const reqData = await reqRes.json();
-                setRequests(reqData.filter(p => p.status === 'Pending'));
+            let poolData = [];
+            if (poolRes.ok) {
+                poolData = await poolRes.json();
+                setAvailable(poolData);
             }
 
-            if (poolRes.ok) {
-                const poolData = await poolRes.json();
-                setAvailable(poolData);
+            if (reqRes.ok) {
+                const reqData = await reqRes.json();
+                const poolTitles = poolData.map(p => p.title);
+
+                const isPresetReq = (p) => p.projectType === 'preset' || (!p.projectType && poolTitles.includes(p.projectName));
+
+                setRequests(reqData.filter(p => p.status === 'Pending' && !isPresetReq(p)));
+                setPresetRequests(reqData.filter(isPresetReq));
             }
         } catch (error) {
             console.error("Failed to fetch project requests or pool:", error);
@@ -158,6 +169,12 @@ export default function AdminProjectsPage() {
                         )}
                     </button>
                     <button
+                        onClick={() => setActiveTab('preset')}
+                        className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'preset' ? 'bg-white shadow-sm text-black border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        Preset Requests
+                    </button>
+                    <button
                         onClick={() => setActiveTab('tracks')}
                         className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'tracks' ? 'bg-white shadow-sm text-black border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
                     >
@@ -204,7 +221,7 @@ export default function AdminProjectsPage() {
                                     <tbody className="divide-y divide-gray-50">
                                         {available.map(item => (
                                             <tr
-                                                key={item.id}
+                                                key={item._id || item.id}
                                                 onClick={() => {
                                                     setEditingProject(item);
                                                     setIsEditModalOpen(true);
@@ -259,7 +276,7 @@ export default function AdminProjectsPage() {
                         )}
                         {requests.map(req => (
                             <div
-                                key={req.id}
+                                key={req._id || req.id}
                                 onClick={() => {
                                     setSelectedRequest(req);
                                     setIsDetailsModalOpen(true);
@@ -314,6 +331,55 @@ export default function AdminProjectsPage() {
                             </div>
                         ))}
                     </motion.div>
+                ) : activeTab === 'preset' ? (
+                    <motion.div
+                        key="preset"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                    >
+                        {presetRequests.length === 0 && (
+                            <div className="col-span-full py-20 text-center">
+                                <p className="text-gray-400 font-black uppercase tracking-widest">No preset project allocations found.</p>
+                            </div>
+                        )}
+                        {presetRequests.map(req => (
+                            <div
+                                key={req.id || req._id}
+                                onClick={() => {
+                                    setSelectedRequest(req);
+                                    setIsDetailsModalOpen(true);
+                                }}
+                                className="bg-white p-7 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/20 relative overflow-hidden group cursor-pointer hover:border-black/5 hover:shadow-2xl hover:shadow-gray-300/30 transition-all active:scale-[0.99]"
+                            >
+                                <div className="absolute top-0 right-0 p-6 opacity-5">
+                                    <Zap className="w-32 h-32 -mr-12 -mt-12" />
+                                </div>
+                                <div className="relative z-10 space-y-6">
+                                    <div className="flex justify-between items-start">
+                                        <div className="space-y-1">
+                                            <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest leading-none">Preset Allocation • {new Date(req.requestedAt).toLocaleDateString()}</p>
+                                            <h3 className="text-xl font-black text-gray-900 uppercase leading-tight tracking-tighter">{req.projectName}</h3>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[7px] font-black uppercase">{req.internName?.substring(0, 2) || 'JD'}</div>
+                                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{req.internName}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                                        <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                                            <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[10px] font-black text-gray-900 uppercase leading-none">{req.track || "Tech Stack Overview"}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </motion.div>
                 ) : (
                     <motion.div
                         key="tracks"
@@ -344,33 +410,86 @@ export default function AdminProjectsPage() {
                                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{category === 'CODING' ? 'Scientific Programming' : 'Research & Innovations'}</h4>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {trackList.map((track, i) => (
-                                                <div
-                                                    key={i}
-                                                    onClick={() => {
-                                                        setEditingTrack({ category, index: i, track });
-                                                        setIsTrackEditModalOpen(true);
-                                                    }}
-                                                    className="group p-6 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex flex-col gap-3 hover:bg-white hover:shadow-xl hover:shadow-gray-200/30 transition-all cursor-pointer relative overflow-hidden"
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-50 group-hover:scale-110 transition-transform">
-                                                            {category === 'CODING' ? <Briefcase className="w-5 h-5 text-black" /> : <Zap className="w-5 h-5 text-rose-500" />}
+                                            {trackList.map((track, i) => {
+                                                const menuKey = `${category}-${i}`;
+                                                return (
+                                                    <div
+                                                        key={track.name || i}
+                                                        className="group p-6 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex flex-col gap-3 hover:bg-white hover:shadow-xl hover:shadow-gray-200/30 transition-all relative overflow-visible"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div
+                                                                className="p-3 bg-white rounded-xl shadow-sm border border-gray-50 group-hover:scale-110 transition-transform cursor-pointer"
+                                                                onClick={() => {
+                                                                    setEditingTrack({ category, index: i, track });
+                                                                    setIsTrackEditModalOpen(true);
+                                                                    setOpenTrackMenuIdx(null);
+                                                                }}
+                                                            >
+                                                                {category === 'CODING' ? <Briefcase className="w-5 h-5 text-black" /> : <Zap className="w-5 h-5 text-rose-500" />}
+                                                            </div>
+
+                                                            {/* ••• Menu */}
+                                                            <div className="relative">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setOpenTrackMenuIdx(prev => prev === menuKey ? null : menuKey);
+                                                                    }}
+                                                                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-300 hover:text-gray-700"
+                                                                >
+                                                                    <MoreHorizontal className="w-4 h-4" />
+                                                                </button>
+
+                                                                {openTrackMenuIdx === menuKey && (
+                                                                    <div
+                                                                        className="absolute right-0 top-8 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden min-w-[130px]"
+                                                                        onClick={e => e.stopPropagation()}
+                                                                    >
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setEditingTrack({ category, index: i, track });
+                                                                                setIsTrackEditModalOpen(true);
+                                                                                setOpenTrackMenuIdx(null);
+                                                                            }}
+                                                                            className="w-full flex items-center gap-2.5 px-4 py-3 text-[10px] font-black text-gray-700 uppercase tracking-widest hover:bg-gray-50 transition-colors"
+                                                                        >
+                                                                            <Edit3 className="w-3.5 h-3.5" /> Edit Track
+                                                                        </button>
+                                                                        <div className="h-px bg-gray-50" />
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setDeleteTrackTarget({ category, index: i, track });
+                                                                                setOpenTrackMenuIdx(null);
+                                                                            }}
+                                                                            className="w-full flex items-center gap-2.5 px-4 py-3 text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 transition-colors"
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <MoreHorizontal className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
+
+                                                        <div
+                                                            className="cursor-pointer"
+                                                            onClick={() => {
+                                                                setEditingTrack({ category, index: i, track });
+                                                                setIsTrackEditModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <h5 className="text-[12px] font-black text-gray-900 uppercase tracking-tight">{track.name}</h5>
+                                                            <p className="text-[9px] text-gray-400 font-bold leading-relaxed mt-1 line-clamp-2">
+                                                                {track.description || "No description provided for this protocol."}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 mt-1">
+                                                            <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                                                            <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Active Node</span>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h5 className="text-[12px] font-black text-gray-900 uppercase tracking-tight">{track.name}</h5>
-                                                        <p className="text-[9px] text-gray-400 font-bold leading-relaxed mt-1 line-clamp-2">
-                                                            {track.description || "No description provided for this protocol."}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 mt-1">
-                                                        <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                                                        <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Active Node</span>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
@@ -463,7 +582,7 @@ export default function AdminProjectsPage() {
                                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Specific Track</label>
                                             <select name="track" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none">
                                                 {tracks[selectedCategory].map((t, i) => (
-                                                    <option key={i} value={t.name}>{t.name}</option>
+                                                    <option key={t.name || i} value={t.name}>{t.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -673,7 +792,7 @@ export default function AdminProjectsPage() {
                                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Specific Track</label>
                                             <select name="track" defaultValue={editingProject.track} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none">
                                                 {tracks[editingProject.category || "CODING"].map((t, i) => (
-                                                    <option key={i} value={t.name}>{t.name}</option>
+                                                    <option key={t.name || i} value={t.name}>{t.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -832,7 +951,7 @@ export default function AdminProjectsPage() {
                 {isDetailsModalOpen && selectedRequest && (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDetailsModalOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-md" />
-                        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="relative bg-white rounded-[2rem] max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[85vh]">
+                        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="relative bg-white rounded-[2rem] max-w-4xl w-full shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[85vh]">
                             {/* Modal Header */}
                             <div className="p-6 border-b border-gray-50 bg-gray-50/30">
                                 <div className="flex justify-between items-start">
@@ -878,8 +997,8 @@ export default function AdminProjectsPage() {
                                     <div className="space-y-3">
                                         <h4 className="text-[7px] font-black text-gray-400 uppercase tracking-[0.3em]">Stack Orientation</h4>
                                         <div className="flex flex-wrap gap-1.5">
-                                            {selectedRequest.techStack?.length > 0 ? selectedRequest.techStack.map(tech => (
-                                                <span key={tech} className="px-2 py-1 bg-white border border-gray-100 rounded-lg text-[8px] font-black text-gray-900 shadow-sm">{tech}</span>
+                                            {selectedRequest.techStack?.length > 0 ? selectedRequest.techStack.map((tech, i) => (
+                                                <span key={`${tech}-${i}`} className="px-2 py-1 bg-white border border-gray-100 rounded-lg text-[8px] font-black text-gray-900 shadow-sm">{tech}</span>
                                             )) : <span className="text-[10px] text-gray-400 font-bold">Unmapped Array</span>}
                                         </div>
                                     </div>
@@ -982,6 +1101,59 @@ export default function AdminProjectsPage() {
                                     Sync Protocol Changes <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Delete Track Confirmation Modal ── */}
+            <AnimatePresence>
+                {deleteTrackTarget && (
+                    <div className="fixed inset-0 z-[140] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setDeleteTrackTarget(null)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-2xl" />
+                        <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+                            className="relative bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border border-gray-100">
+
+                            {/* Red icon */}
+                            <div className="w-14 h-14 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center mb-5">
+                                <Trash2 className="w-6 h-6 text-red-500" />
+                            </div>
+
+                            <h3 className="text-lg font-black text-gray-900 uppercase tracking-tighter mb-1">Delete Track?</h3>
+                            <p className="text-sm text-gray-500 font-medium mb-1">
+                                You are about to delete the track:
+                            </p>
+                            <p className="text-sm font-black text-gray-900 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 mb-5">
+                                {deleteTrackTarget.track.name}
+                            </p>
+                            <p className="text-xs text-gray-400 font-medium mb-6">
+                                This will remove the track from the list. Existing intern assignments will not be affected.
+                            </p>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteTrackTarget(null)}
+                                    className="flex-1 py-3 bg-gray-50 text-gray-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-100"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const { category, index } = deleteTrackTarget;
+                                        setTracks(prev => ({
+                                            ...prev,
+                                            [category]: prev[category].filter((_, i) => i !== index)
+                                        }));
+                                        toast.success(`Track "${deleteTrackTarget.track.name}" removed.`);
+                                        setDeleteTrackTarget(null);
+                                    }}
+                                    className="flex-[2] py-3 bg-red-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" /> Yes, Delete
+                                </button>
+                            </div>
                         </motion.div>
                     </div>
                 )}

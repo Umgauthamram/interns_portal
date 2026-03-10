@@ -13,6 +13,7 @@ import {
     LogOut,
     Shield,
     Calendar,
+    CalendarCheck,
     UserPlus,
     Bug
 } from "lucide-react";
@@ -26,7 +27,6 @@ const sidebarItems = [
     { icon: Layout, label: "Content", href: "/admin/content" },
     { icon: Calendar, label: "Schedule", href: "/admin/schedule" },
     { icon: Bug, label: "Tickets", href: "/admin/tickets" },
-    { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];
 
 export function AdminSidebar() {
@@ -44,11 +44,9 @@ export function AdminSidebar() {
         <aside className="fixed left-0 top-0 h-screen w-64 bg-white text-gray-900 flex flex-col z-50 border-r border-gray-200 shadow-sm">
             {/* Logo Area */}
             <div className="p-8 pb-4 flex items-center gap-3">
-                <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center shadow-lg shadow-gray-900/10">
-                    <Shield className="w-6 h-6 text-white" />
-                </div>
+
                 <div>
-                    <h1 className="text-lg font-bold tracking-tight text-gray-900">Admin<span className="text-black">Panel</span></h1>
+                    <h1 className="text-lg font-semibold tracking-tight text-gray-900">Digital South</h1>
                     <p className="text-xs text-gray-500 font-medium">Administrator Access</p>
                 </div>
             </div>
@@ -83,30 +81,22 @@ export function AdminSidebar() {
             </nav>
 
             {/* Admin Profile / Logout */}
-            <div className="p-4 m-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="flex items-center gap-3 mb-4 p-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-black border-2 border-white shadow-md"></div>
-                    <div className="overflow-hidden">
-                        <p className="text-sm font-bold text-gray-900 truncate">Admin User</p>
-                        <p className="text-xs text-gray-500 truncate">System Admin</p>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => window.dispatchEvent(new CustomEvent('open-report-issue'))}
-                        className="flex-1 py-2 px-3 bg-white hover:bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400 rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-2"
-                    >
-                        <Settings className="w-3.5 h-3.5" />
-                        Report
-                    </button>
-                    <button
-                        onClick={handleLogout}
-                        className="flex-1 py-2 px-3 bg-white hover:bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400 rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-2"
-                    >
-                        <LogOut className="w-3.5 h-3.5" />
-                        Exit
-                    </button>
-                </div>
+            <div className="p-3 mx-4 mb-4 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between shadow-sm">
+                <button
+                    onClick={() => router.push('/admin/settings')}
+                    className="w-12 h-12 rounded-full bg-blue-50 shadow-md border-[3px] border-white flex items-center justify-center cursor-pointer hover:scale-105 transition-transform overflow-hidden"
+                    title="Settings"
+                >
+                    <img src="https://api.dicebear.com/7.x/micah/svg?seed=admin&backgroundColor=transparent" alt="Admin" className="w-full h-full object-cover scale-110" />
+                </button>
+                <button
+                    onClick={handleLogout}
+                    className="h-12 px-5 flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-[1.5rem] border border-gray-200 transition-all shadow-sm flex-1 ml-3"
+                    title="Logout"
+                >
+                    <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">Logout</span>
+                    <LogOut className="w-4 h-4" />
+                </button>
             </div>
         </aside>
     );

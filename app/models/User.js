@@ -54,6 +54,20 @@ const UserSchema = new mongoose.Schema({
         enum: ['intern', 'admin'],
         default: 'intern',
     },
+    profilePicture: {
+        type: String,
+    },
+    avatarSeed: {
+        type: String,
+    },
+    assignedAdmin: {
+        type: String, // email of the admin assigned to this intern
+        default: 'gauthamram.um@gmail.com',
+    },
+    missedMeetings: {
+        type: Number,
+        default: 0,
+    },
 }, { timestamps: true });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

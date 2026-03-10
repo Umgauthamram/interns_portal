@@ -9,6 +9,7 @@ import Link from "next/link";
 export default function LoginPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [terminatedInfo, setTerminatedInfo] = useState(null); // { contact }
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -25,6 +26,7 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setTerminatedInfo(null);
 
         try {
             const res = await fetch("/api/login", {
@@ -40,17 +42,18 @@ export default function LoginPage() {
                 localStorage.setItem("userEmail", data.user.email);
                 localStorage.setItem("userRole", data.user.role || 'intern');
                 localStorage.setItem("loginTimestamp", Date.now().toString());
-                
-                // Set cookies so server-side proxy middleware can read them
+
                 document.cookie = `userRole=${data.user.role || 'intern'}; path=/; max-age=10800`;
                 document.cookie = `userEmail=${data.user.email}; path=/; max-age=10800`;
 
-                // Redirect based on role (only admin and intern)
                 if (data.user.role === 'admin') {
                     router.push("/admin");
                 } else {
                     router.push("/dashboard");
                 }
+            } else if (res.status === 403 && data.terminated) {
+                // Terminated account — show inline banner
+                setTerminatedInfo({ contact: data.contact });
             } else {
                 toast.error(data.message || "Login Failed");
             }
@@ -63,12 +66,12 @@ export default function LoginPage() {
 
     return (
         <div className="relative min-h-screen w-screen bg-slate-50 font-sans flex items-center justify-center overflow-hidden p-4">
-            
+
             {/* Premium Animated Gradient Blobs */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-purple-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '7s'}}></div>
-                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-sky-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '5s'}}></div>
-                <div className="absolute bottom-[-20%] left-[20%] w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] bg-indigo-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '9s'}}></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-purple-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{ animationDuration: '7s' }}></div>
+                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-sky-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{ animationDuration: '5s' }}></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] bg-indigo-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{ animationDuration: '9s' }}></div>
             </div>
 
             <div className="w-full max-w-md bg-white/70 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-white/60 p-8 space-y-6 relative z-10">
@@ -108,6 +111,19 @@ export default function LoginPage() {
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         />
                     </div>
+
+                    {terminatedInfo && (
+                        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-1">
+                            <p className="text-sm font-black text-red-700">⛔ Account Terminated</p>
+                            <p className="text-xs text-red-500 font-medium">Your internship account has been terminated and access has been revoked.</p>
+                            <p className="text-xs font-bold text-red-600 mt-1">
+                                For queries, contact:{" "}
+                                <a href={`mailto:${terminatedInfo.contact}`} className="underline hover:text-red-800">
+                                    {terminatedInfo.contact}
+                                </a>
+                            </p>
+                        </div>
+                    )}
 
                     <button
                         type="submit"

@@ -25,6 +25,8 @@ import {
     User,
     ChevronLeft,
     Layers,
+    Link as LinkIcon2,
+    Minus,
     Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -73,10 +75,24 @@ export default function AdminLiveBookPage() {
     const [projectionSize, setProjectionSize] = useState("phone"); // phone or laptop
 
     const addBlock = (type) => {
+        const defaultContent = type === 'link' ? JSON.stringify({ label: '', url: '' }) : '';
         setActiveTopic(prev => ({
             ...prev,
-            blocks: [...prev.blocks, { type, content: "" }]
+            blocks: [...prev.blocks, { type, content: defaultContent }]
         }));
+    };
+
+    // Helper: update a sub-field of a JSON block (for link)
+    const updateLinkField = (index, field, value) => {
+        const newBlocks = [...activeTopic.blocks];
+        const parsed = (() => { try { return JSON.parse(newBlocks[index].content); } catch { return { label: '', url: '' }; } })();
+        parsed[field] = value;
+        newBlocks[index].content = JSON.stringify(parsed);
+        setActiveTopic(prev => ({ ...prev, blocks: newBlocks }));
+    };
+
+    const parseLinkBlock = (content) => {
+        try { return JSON.parse(content); } catch { return { label: content, url: '' }; }
     };
 
     const updateBlock = (index, value) => {
@@ -324,10 +340,12 @@ export default function AdminLiveBookPage() {
                             <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border border-gray-100 shadow-xl space-y-6">
                                 <div className="flex items-center justify-between border-b border-gray-50 pb-5">
                                     <h2 className="text-[8px] font-black uppercase tracking-[0.4em] text-gray-300">Intel Constructor</h2>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 flex-wrap">
                                         <button type="button" onClick={() => addBlock('text')} className="px-3 py-2 bg-gray-50 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">+ Text</button>
                                         <button type="button" onClick={() => addBlock('image')} className="px-3 py-2 bg-gray-50 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">+ Photo</button>
                                         <button type="button" onClick={() => addBlock('youtube')} className="px-3 py-2 bg-gray-50 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">+ Video</button>
+                                        <button type="button" onClick={() => addBlock('link')} className="px-3 py-2 bg-blue-50 text-blue-700 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">+ Link</button>
+                                        <button type="button" onClick={() => addBlock('gap')} className="px-3 py-2 bg-gray-50 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">+ Gap</button>
                                     </div>
                                 </div>
 
@@ -348,12 +366,38 @@ export default function AdminLiveBookPage() {
                                                         <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
                                                         <input className="flex-1 bg-transparent border-0 text-[10px] font-bold focus:ring-0 outline-none" value={block.content} onChange={(e) => updateBlock(idx, e.target.value)} placeholder="Image URL (Direct Link)" />
                                                     </div>
-                                                ) : (
+                                                ) : block.type === 'youtube' ? (
                                                     <div className="flex items-center gap-3">
                                                         <Youtube className="w-3.5 h-3.5 text-red-500" />
                                                         <input className="flex-1 bg-transparent border-0 text-[10px] font-bold focus:ring-0 outline-none" value={block.content} onChange={(e) => updateBlock(idx, e.target.value)} placeholder="YouTube Link" />
                                                     </div>
-                                                )}
+                                                ) : block.type === 'link' ? (
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <LinkIcon2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                                            <input
+                                                                className="flex-1 bg-white border border-blue-100 rounded-lg px-2.5 py-1.5 text-[10px] font-bold focus:ring-2 focus:ring-blue-100 outline-none"
+                                                                value={parseLinkBlock(block.content).label}
+                                                                onChange={e => updateLinkField(idx, 'label', e.target.value)}
+                                                                placeholder="Label (e.g. React Docs)"
+                                                            />
+                                                        </div>
+                                                        <input
+                                                            className="w-full bg-white border border-blue-100 rounded-lg px-2.5 py-1.5 text-[10px] font-medium text-blue-600 focus:ring-2 focus:ring-blue-100 outline-none ml-[22px]"
+                                                            value={parseLinkBlock(block.content).url}
+                                                            onChange={e => updateLinkField(idx, 'url', e.target.value)}
+                                                            placeholder="https://..."
+                                                        />
+                                                    </div>
+                                                ) : block.type === 'gap' ? (
+                                                    <div className="flex items-center gap-3 py-1">
+                                                        <Minus className="w-3.5 h-3.5 text-gray-300" />
+                                                        <div className="flex-1 border-t-2 border-dashed border-gray-200" />
+                                                        <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Gap / Spacer</span>
+                                                        <div className="flex-1 border-t-2 border-dashed border-gray-200" />
+                                                        <Minus className="w-3.5 h-3.5 text-gray-300" />
+                                                    </div>
+                                                ) : null}
                                             </div>
                                         ))}
                                     </div>
@@ -409,7 +453,7 @@ export default function AdminLiveBookPage() {
                                                             ) : (
                                                                 <div className="aspect-video w-full rounded-[1.5rem] bg-gray-50 border-2 border-dashed border-gray-100 flex items-center justify-center"><ImageIcon className="w-6 h-6 text-gray-200" /></div>
                                                             )
-                                                        ) : (
+                                                        ) : block.type === 'youtube' ? (
                                                             block.content && getYoutubeId(block.content) ? (
                                                                 <div className="aspect-video w-full rounded-[1.5rem] overflow-hidden bg-black shadow-xl">
                                                                     <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${getYoutubeId(block.content)}`} frameBorder="0" allowFullScreen />
@@ -417,7 +461,29 @@ export default function AdminLiveBookPage() {
                                                             ) : (
                                                                 <div className="aspect-video w-full rounded-[1.5rem] bg-gray-50 border-2 border-dashed border-gray-100 flex items-center justify-center"><Youtube className="w-6 h-6 text-gray-200" /></div>
                                                             )
-                                                        )}
+                                                        ) : block.type === 'link' ? (() => {
+                                                            const lnk = parseLinkBlock(block.content);
+                                                            return lnk.url ? (
+                                                                <a href={lnk.url} target="_blank" rel="noopener noreferrer"
+                                                                    className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 hover:bg-blue-100 transition-colors group">
+                                                                    <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                                                                        <LinkIcon2 className="w-3.5 h-3.5 text-white" />
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className={`${projectionSize === 'phone' ? 'text-[10px]' : 'text-[13px]'} font-black text-blue-700 truncate`}>{lnk.label || lnk.url}</p>
+                                                                        <p className={`${projectionSize === 'phone' ? 'text-[8px]' : 'text-[10px]'} text-blue-400 font-medium truncate`}>{lnk.url}</p>
+                                                                    </div>
+                                                                    <ExternalLink className="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600" />
+                                                                </a>
+                                                            ) : (
+                                                                <div className="bg-blue-50 border-2 border-dashed border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2 text-blue-300">
+                                                                    <LinkIcon2 className="w-4 h-4" />
+                                                                    <span className={`${projectionSize === 'phone' ? 'text-[8px]' : 'text-[11px]'} font-black uppercase tracking-widest`}>Reference Link — enter URL</span>
+                                                                </div>
+                                                            );
+                                                        })() : block.type === 'gap' ? (
+                                                            <div style={{ height: '2cm' }} />
+                                                        ) : null}
                                                     </div>
                                                 ))}
                                             </div>
@@ -477,7 +543,7 @@ export default function AdminLiveBookPage() {
                                                         ) : (
                                                             <div className="aspect-video w-full rounded-[2.5rem] bg-gray-50 border-2 border-dashed border-gray-100 flex items-center justify-center"><ImageIcon className="w-8 h-8 text-gray-200" /></div>
                                                         )
-                                                    ) : (
+                                                    ) : block.type === 'youtube' ? (
                                                         block.content && getYoutubeId(block.content) ? (
                                                             <div className="aspect-video w-full rounded-[3rem] overflow-hidden bg-black shadow-2xl">
                                                                 <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${getYoutubeId(block.content)}`} frameBorder="0" allowFullScreen />
@@ -485,7 +551,29 @@ export default function AdminLiveBookPage() {
                                                         ) : (
                                                             <div className="aspect-video w-full rounded-[3rem] bg-gray-50 border-2 border-dashed border-gray-100 flex items-center justify-center"><Youtube className="w-10 h-10 text-gray-200" /></div>
                                                         )
-                                                    )}
+                                                    ) : block.type === 'link' ? (() => {
+                                                        const lnk = parseLinkBlock(block.content);
+                                                        return lnk.url ? (
+                                                            <a href={lnk.url} target="_blank" rel="noopener noreferrer"
+                                                                className="flex items-center gap-4 bg-blue-50 border border-blue-100 rounded-2xl px-6 py-4 hover:bg-blue-100 transition-colors group">
+                                                                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                                                                    <LinkIcon2 className="w-5 h-5 text-white" />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className={`${projectionSize === 'phone' ? 'text-[12px]' : 'text-[16px]'} font-black text-blue-700 truncate`}>{lnk.label || lnk.url}</p>
+                                                                    <p className={`${projectionSize === 'phone' ? 'text-[9px]' : 'text-[11px]'} text-blue-400 font-medium truncate mt-0.5`}>{lnk.url}</p>
+                                                                </div>
+                                                                <ExternalLink className="w-4 h-4 text-blue-400 group-hover:text-blue-600" />
+                                                            </a>
+                                                        ) : (
+                                                            <div className="bg-blue-50 border-2 border-dashed border-blue-100 rounded-2xl px-6 py-4 flex items-center gap-3 text-blue-300">
+                                                                <LinkIcon2 className="w-5 h-5" />
+                                                                <span className={`${projectionSize === 'phone' ? 'text-[9px]' : 'text-[13px]'} font-black uppercase tracking-widest`}>Reference Link — enter URL in editor</span>
+                                                            </div>
+                                                        );
+                                                    })() : block.type === 'gap' ? (
+                                                        <div style={{ height: '2cm' }} />
+                                                    ) : null}
                                                 </div>
                                             ))}
                                         </div>

@@ -93,51 +93,52 @@ const ProjectCard = ({ p, onEdit }) => {
                         />
                     )}
                     {p.progress < 100 && firePos.x !== 0 && (
-                        <g transform={`translate(${firePos.x}, ${firePos.y}) rotate(${firePos.ang})`}>
-                            {/* Proportional Kinetic Ambient Glow */}
-                            <motion.circle
-                                r="15"
-                                fill="#ff4500"
-                                animate={{ scale: [1, 1.3, 1], opacity: [0.05, 0.15, 0.05] }}
-                                transition={{ duration: 1, repeat: Infinity }}
-                                className="filter blur-[10px]"
-                            />
-
-                            {/* Proper High-Fidelity Clockwise Combustion Flame */}
-                            <motion.g
-                                animate={{
-                                    scale: [1, 1.25, 1],
-                                    x: [0, 2, 0]
-                                }}
-                                transition={{ duration: 0.2, repeat: Infinity, ease: "linear" }}
+                        <foreignObject
+                            x={firePos.x - 35}
+                            y={firePos.y - 35}
+                            width={70}
+                            height={70}
+                            style={{ overflow: 'visible' }}
+                        >
+                            <div
+                                style={{ width: '100%', height: '100%', transform: `rotate(${firePos.ang}deg)` }}
+                                className="flex items-center justify-center pointer-events-none"
                             >
-                                {/* Outer Combustion Hull (Deep Red) */}
-                                <motion.path
-                                    d="M 14,0 C 14,0 10,-4 0,-12 C -6,-15 -10,-8 -10,0 C -10,8 -6,15 0,12 C 10,4 14,0 14,0 Z"
-                                    fill="#ff0000"
-                                    animate={{
-                                        d: [
-                                            "M 14,-1 C 14,-1 10,-5 0,-14 C -6,-17 -10,-8 -10,0 C -10,8 -6,17 0,14 C 10,5 14,1 14,1 Z",
-                                            "M 16,0 C 16,0 12,-3 0,-10 C -6,-12 -10,-6 -10,0 C -10,6 -6,12 0,10 C 12,3 16,0 16,0 Z",
-                                            "M 14,1 C 14,1 10,-3 0,-12 C -6,-15 -10,-8 -10,0 C -10,8 -6,15 0,12 C 10,3 14,-1 14,-1 Z"
-                                        ]
-                                    }}
-                                    transition={{ duration: 0.15, repeat: Infinity }}
-                                    style={{ filter: "drop-shadow(0 0 10px rgba(255, 0, 0, 0.6))" }}
-                                />
+                                <svg viewBox="-50 -50 100 100" className="w-[120%] h-[120%] drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)] filter">
+                                    <g transform="rotate(90)">
+                                        {/* Engine Fire */}
+                                        <motion.g
+                                            animate={{ scaleY: [1, 1.4, 1], scaleX: [1, 1.1, 1] }}
+                                            transition={{ duration: 0.1, repeat: Infinity, ease: "linear" }}
+                                            style={{ transformOrigin: "0px 20px" }}
+                                        >
+                                            <path d="M -10,21 C -15,40 0,60 0,60 C 0,60 15,40 10,21 Z" fill="#ea580c" />
+                                            <path d="M -6,21 C -8,35 0,50 0,50 C 0,50 8,35 6,21 Z" fill="#fbbf24" opacity="0.9" />
+                                            <path d="M -2,21 C -3,28 0,35 0,35 C 0,35 3,28 2,21 Z" fill="#ffffff" opacity="0.8" />
+                                        </motion.g>
 
-                                {/* Inner Energy Body (Bright Amber) */}
-                                <motion.path
-                                    d="M 8,0 C 8,0 4,-3 0,-8 C -4,-10 -6,-5 -6,0 C -6,5 -4,10 0,8 C 4,3 8,0 8,0 Z"
-                                    fill="#ffcc00"
-                                    animate={{ scale: [0.95, 1.1, 0.95] }}
-                                    transition={{ duration: 0.1, repeat: Infinity }}
-                                />
+                                        {/* Back Fin */}
+                                        <path d="M -2,15 L 0,40 L 2,15 Z" fill="#9f1239" />
 
-                                {/* Thermal Focal Point (White) */}
-                                <circle cx="4" cy="0" r="2.5" fill="#ffffff" className="filter blur-[0.5px]" />
-                            </motion.g>
-                        </g>
+                                        {/* Side Fins */}
+                                        <path d="M -14,5 Q -28,15 -28,25 C -28,30 -24,35 -14,35 L -10,20 Z" fill="#e11d48" />
+                                        <path d="M 14,5 Q 28,15 28,25 C 28,30 24,35 14,35 L 10,20 Z" fill="#be123c" />
+
+                                        {/* Body */}
+                                        <path d="M -14,20 C -14,-5 0,-30 0,-30 C 0,-30 14,-5 14,20 Q 0,25 -14,20 Z" fill="#f3f4f6" />
+                                        <path d="M 0,-30 C 0,-30 14,-5 14,20 Q 0,22.5 0,20 Z" fill="#e5e7eb" opacity="0.6" />
+
+                                        {/* Nose */}
+                                        <path d="M -9.5,-15 C -5,-25 0,-30 0,-30 C 0,-30 5,-25 9.5,-15 Q 0,-13 -9.5,-15 Z" fill="#ef4444" />
+                                        <path d="M 0,-30 C 0,-30 5,-25 9.5,-15 Q 0,-13 0,-15 Z" fill="#dc2626" opacity="0.6" />
+
+                                        {/* Window */}
+                                        <circle cx="0" cy="-2" r="7" fill="#38bdf8" stroke="#ef4444" strokeWidth="2.5" />
+                                        <path d="M -3,-5 A 4 4 0 0 1 1,-7" fill="none" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+                                    </g>
+                                </svg>
+                            </div>
+                        </foreignObject>
                     )}
                 </svg>
                 {p.progress === 100 && (
@@ -153,9 +154,9 @@ const ProjectCard = ({ p, onEdit }) => {
 
             <div
                 onClick={() => onEdit(p)}
-                className="absolute inset-0 rounded-[2rem] p-6 overflow-hidden bg-white shadow-lg transition-all flex flex-col justify-between cursor-pointer hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] group/card"
+                className="absolute inset-0 rounded-[2rem] p-6 overflow-hidden bg-white shadow-xl transition-all flex flex-col justify-between cursor-pointer hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] group/card border border-gray-50"
                 style={{
-                    background: `linear-gradient(135deg, #ffffff 0%, #ffffff 40%, ${p.colorHex}15 100%)`
+                    background: `linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.95) 100%), linear-gradient(135deg, transparent 60%, ${p.colorHex}15 100%)`
                 }}
             >
                 <div className="flex justify-between items-start relative z-10">
@@ -163,37 +164,31 @@ const ProjectCard = ({ p, onEdit }) => {
                         <h3 className="text-xl font-black text-gray-900 uppercase leading-none tracking-tighter line-clamp-1 group-hover/card:text-black transition-colors">
                             {p.title}
                         </h3>
-                        <span className="inline-block px-2 py-0.5 bg-gray-50 text-[7px] font-black uppercase text-gray-400 rounded-lg border border-gray-100">{p.track}</span>
+                        <span className="inline-block px-2 py-0.5 bg-gray-100 text-[11px] font-black uppercase text-gray-500 rounded-md tracking-wide">{p.track}</span>
                     </div>
-                    <div className={`px-2.5 py-1 rounded-full text-[7px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-1.5 ${p.progress === 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : p.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : p.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                    <div className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-1.5 ${p.progress === 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : p.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : p.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
                         {p.progress === 100 && <X className="w-2.5 h-2.5 rotate-45" strokeWidth={3} />}
                         {p.progress === 100 ? 'COMPLETED' : p.status === 'Pending' ? 'REQUEST PENDING' : p.status === 'Rejected' ? 'REJECTED' : 'IN PROGRESS'}
                     </div>
                 </div>
 
-                <div className="space-y-3 relative z-10">
-                    <div className="flex flex-wrap gap-1.5 opacity-60 group-hover:opacity-100 transition-all">
-                        {p.techStack?.slice(0, 3).map((tech, i) => (
-                            <span key={i} className="text-[7px] font-black uppercase tracking-tighter text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 group-hover/card:border-gray-200 transition-colors">{tech}</span>
-                        ))}
-                    </div>
-                </div>
 
-                <div className="flex items-end justify-between relative z-10">
-                    <div className="space-y-1">
+
+                <div className="flex items-end justify-between relative z-10 pt-6">
+                    <div className="space-y-0.5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Progress</span>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-6xl font-black text-gray-900 leading-none tracking-tighter">{p.progress}</span>
-                            <span className="text-lg font-bold text-gray-200">%</span>
+                            <span className="text-2xl font-black leading-none" style={{ color: p.colorHex }}>{p.progress ?? 0}</span>
+                            <span className="text-sm font-black text-gray-400">%</span>
                         </div>
-                        <p className="text-[7px] font-black text-gray-300 uppercase tracking-[0.3em] ml-0.5">Integration Level</p>
                     </div>
 
                     <div className="text-right space-y-0.5">
-                        <div className="flex items-center gap-1 justify-end text-gray-200">
-                            <CalendarIcon className="w-2.5 h-2.5" />
-                            <span className="text-[7px] font-black uppercase tracking-widest">EOL</span>
+                        <div className="flex items-center gap-1.5 justify-end text-gray-400">
+                            <CalendarIcon className="w-3.5 h-3.5" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">EOL</span>
                         </div>
-                        <p className="text-[9px] font-black text-gray-700 uppercase">24 MAR 26</p>
+                        <p className="text-[13px] font-black text-gray-800 uppercase tracking-wide">24 MAR 26</p>
                     </div>
                 </div>
                 <div className="absolute bottom-[-10px] right-[-10px] opacity-[0.02] group-hover/card:opacity-[0.05] transition-opacity pointer-events-none transform rotate-12">
@@ -520,8 +515,8 @@ export default function ProjectsPage() {
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="space-y-2">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">GitHub Repository (Required)</label>
-                                                        <input required disabled={isReadOnly} className="w-full bg-gray-50 border-0 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none disabled:opacity-50" value={formData.repoLink || ""} onChange={e => setFormData({ ...formData, repoLink: e.target.value })} placeholder="Repo URL" />
+                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">GitHub Repository</label>
+                                                        <input disabled={isReadOnly} className="w-full bg-gray-50 border-0 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none disabled:opacity-50" value={formData.repoLink || ""} onChange={e => setFormData({ ...formData, repoLink: e.target.value })} placeholder="Repo URL" />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Live Deploy Link</label>
@@ -533,84 +528,62 @@ export default function ProjectsPage() {
                                                     <textarea required rows="3" disabled={isReadOnly} className="w-full bg-gray-50 border-0 rounded-[2rem] px-8 py-6 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none resize-none disabled:opacity-50" value={formData.solution} onChange={e => setFormData({ ...formData, solution: e.target.value })} placeholder="Architecture summary..." />
                                                 </div>
 
-                                                {formData.id && (
-                                                    <div className="space-y-4 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                                                        <div className="flex justify-between items-center px-2">
-                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em]">Integration Level</label>
-                                                            <div className="flex items-center group bg-white px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm transition-all focus-within:border-black">
-                                                                <input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    max="100"
-                                                                    disabled={isReadOnly}
-                                                                    value={formData.progress || 0}
-                                                                    onChange={e => setFormData({ ...formData, progress: isNaN(parseInt(e.target.value)) ? '' : Math.min(100, Math.max(0, parseInt(e.target.value))) })}
-                                                                    className="w-8 text-right bg-transparent text-sm font-black text-black outline-none disabled:opacity-50 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none m-0 p-0"
-                                                                    style={{ MozAppearance: 'textfield' }}
-                                                                />
-                                                                <span className="text-sm font-black text-gray-400 ml-0.5 group-focus-within:text-black transition-colors">%</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="relative w-full h-4 bg-gray-100/80 rounded-full overflow-hidden flex items-center shadow-inner cursor-pointer" onClick={() => { if (!isReadOnly) { const el = document.getElementById('progress-slider-1'); if (el) el.focus(); } }}>
-                                                            <div
-                                                                className="absolute left-0 h-full bg-gradient-to-r from-gray-900 to-black rounded-full transition-all duration-300 pointer-events-none"
-                                                                style={{ width: `${formData.progress || 0}%` }}
-                                                            />
-                                                            <input
-                                                                id="progress-slider-1"
-                                                                type="range"
-                                                                min="0"
-                                                                max="100"
-                                                                step="1"
-                                                                disabled={isReadOnly}
-                                                                value={formData.progress || 0}
-                                                                onChange={e => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
+
                                             </div>
                                         ) : (
                                             <div className="space-y-12">
                                                 {formData.id ? (
-                                                    <div className="space-y-4">
+                                                    <div className="space-y-4 w-full">
                                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Assigned Scope Parameters</label>
-                                                        <div className="p-6 rounded-[2rem] bg-gray-50 border border-gray-100 shadow-sm relative overflow-hidden">
-                                                            <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                                                                <Target className="w-24 h-24 -mr-6 -mt-6" />
+                                                        <div className="p-8 rounded-[2.5rem] bg-gray-50 border border-gray-100 shadow-sm relative overflow-hidden">
+                                                            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                                                                <Target className="w-32 h-32 -mr-8 -mt-8" />
                                                             </div>
-                                                            <h4 className="text-xl font-black uppercase tracking-tighter text-gray-900 mb-2">{formData.title}</h4>
-                                                            <p className="text-[12px] font-bold text-gray-400 leading-relaxed mb-6">{formData.description}</p>
-                                                            <div className="flex flex-wrap gap-2 text-[8px] font-black uppercase tracking-widest">
+                                                            <h4 className="text-2xl font-black uppercase tracking-tighter text-gray-900 mb-3">{formData.title}</h4>
+                                                            <p className="text-sm font-bold text-gray-500 leading-relaxed mb-8 max-w-2xl">{formData.description}</p>
+                                                            <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest">
                                                                 {formData.techStack.map(t => (
-                                                                    <span key={t} className="px-2.5 py-1 rounded bg-black text-white shadow-sm">{t}</span>
+                                                                    <span key={t} className="px-3 py-1.5 rounded-lg bg-black text-white shadow-sm">{t}</span>
                                                                 ))}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="space-y-4">
+                                                    <div className="space-y-4 w-full">
                                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Select Statement</label>
-                                                        <div className="grid grid-cols-1 gap-4">
-                                                            {myStatements.map(s => (
-                                                                <div
-                                                                    key={s.id}
-                                                                    onClick={() => !isReadOnly && setFormData({ ...formData, title: s.title, description: s.description, techStack: s.techStack })}
-                                                                    className={`p-6 rounded-[2rem] border-2 transition-all ${isReadOnly ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${formData.title === s.title ? 'bg-black text-white border-black shadow-xl' : 'bg-gray-50 border-transparent hover:border-black/5'}`}
-                                                                >
-                                                                    <div className="flex justify-between items-center mb-3">
-                                                                        <h4 className="text-lg font-black uppercase tracking-tighter">{s.title}</h4>
-                                                                        <CheckCircle2 className={`w-4 h-4 ${formData.title === s.title ? 'text-white' : 'text-gray-200'}`} />
+                                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                            {myStatements.map(s => {
+                                                                const hasPreset = projects.some(p => p.projectType === 'preset' || availablePool.some(pool => pool.title === p.title));
+                                                                const isRequested = projects.some(p => p.title === s.title);
+                                                                const isDisabled = isReadOnly || hasPreset;
+
+                                                                return (
+                                                                    <div
+                                                                        key={s.id}
+                                                                        onClick={() => !isDisabled && setFormData({ ...formData, title: s.title, description: s.description, techStack: s.techStack })}
+                                                                        className={`p-8 rounded-[2.5rem] flex flex-col justify-between border-2 transition-all ${isDisabled && !isRequested ? 'opacity-60 cursor-not-allowed' : isDisabled && isRequested ? 'cursor-default' : 'cursor-pointer'} ${formData.title === s.title ? 'bg-black text-white border-black shadow-2xl scale-[1.02]' : 'bg-gray-50 border-gray-100 hover:border-black/10'}`}
+                                                                    >
+                                                                        <div>
+                                                                            <div className="flex justify-between items-start mb-4 gap-4">
+                                                                                <h4 className="text-xl font-black uppercase tracking-tighter leading-tight">{s.title}</h4>
+                                                                                {isRequested && <CheckCircle2 className={`w-8 h-8 shrink-0 ${formData.title === s.title ? 'text-white' : 'text-emerald-500'}`} />}
+                                                                            </div>
+                                                                            <p className={`text-sm font-semibold mb-8 leading-relaxed ${formData.title === s.title ? 'text-gray-300' : 'text-gray-500'}`}>{s.description}</p>
+                                                                            <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest mb-8">
+                                                                                {s.techStack.map(t => (
+                                                                                    <span key={t} className={`px-2.5 py-1 rounded-md shadow-sm border ${formData.title === s.title ? 'bg-white/10 text-white border-transparent' : 'bg-white text-gray-600 border-gray-200'}`}>{t}</span>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            disabled={isDisabled}
+                                                                            className={`w-full py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-sm ${isRequested ? 'bg-emerald-500 text-white shadow-emerald-500/20' : formData.title === s.title ? 'bg-white text-black' : isDisabled ? 'bg-gray-200 text-gray-400' : 'bg-black text-white hover:scale-[1.02] active:scale-95'}`}
+                                                                        >
+                                                                            {isRequested ? 'Requested' : 'Request'}
+                                                                        </button>
                                                                     </div>
-                                                                    <p className={`text-[12px] font-medium mb-4 leading-relaxed ${formData.title === s.title ? 'text-gray-300' : 'text-gray-400'}`}>{s.description}</p>
-                                                                    <div className="flex flex-wrap gap-1.5 text-[8px] font-black uppercase tracking-widest">
-                                                                        {s.techStack.map(t => (
-                                                                            <span key={t} className={`px-2 py-0.5 rounded ${formData.title === s.title ? 'bg-white/10' : 'bg-gray-200 text-gray-500'}`}>{t}</span>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                                                );
+                                                            })}
                                                         </div>
                                                     </div>
                                                 )}
@@ -627,71 +600,73 @@ export default function ProjectsPage() {
                                                                 </div>
                                                             </div>
 
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                                                <div className="space-y-2">
-                                                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">GitHub Repository (Required)</label>
-                                                                    <input required disabled={isReadOnly} className="w-full bg-gray-50 border-0 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none disabled:opacity-50" value={formData.repoLink || ""} onChange={e => setFormData({ ...formData, repoLink: e.target.value })} placeholder="Repo URL" />
-                                                                </div>
-                                                                <div className="space-y-2">
-                                                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Live Deploy Link</label>
-                                                                    <input disabled={isReadOnly} className="w-full bg-gray-50 border-0 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none disabled:opacity-50" value={formData.deployLink || ""} onChange={e => setFormData({ ...formData, deployLink: e.target.value })} placeholder="Vercel / Firebase URL" />
-                                                                </div>
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Detailed Solution & Implementation</label>
-                                                                <textarea required disabled={isReadOnly} rows="5" className="w-full bg-gray-50 border-0 rounded-[2rem] px-8 py-6 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none resize-none disabled:opacity-50" value={formData.solution} onChange={e => setFormData({ ...formData, solution: e.target.value })} placeholder="Explain your implementation, architecture, and how it solves the problem..." />
-                                                            </div>
-
                                                             {formData.id && (
-                                                                <div className="space-y-4 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                                                                    <div className="flex justify-between items-center px-2">
-                                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em]">Integration Level</label>
-                                                                        <div className="flex items-center group bg-white px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm transition-all focus-within:border-black">
-                                                                            <input
-                                                                                type="number"
-                                                                                min="0"
-                                                                                max="100"
-                                                                                disabled={isReadOnly}
-                                                                                value={formData.progress || 0}
-                                                                                onChange={e => setFormData({ ...formData, progress: isNaN(parseInt(e.target.value)) ? '' : Math.min(100, Math.max(0, parseInt(e.target.value))) })}
-                                                                                className="w-8 text-right bg-transparent text-sm font-black text-black outline-none disabled:opacity-50 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none m-0 p-0"
-                                                                                style={{ MozAppearance: 'textfield' }}
-                                                                            />
-                                                                            <span className="text-sm font-black text-gray-400 ml-0.5 group-focus-within:text-black transition-colors">%</span>
+                                                                <>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                                                                        <div className="space-y-2">
+                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">GitHub Repository</label>
+                                                                            <input disabled={isReadOnly} className="w-full bg-gray-50 border-0 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none disabled:opacity-50" value={formData.repoLink || ""} onChange={e => setFormData({ ...formData, repoLink: e.target.value })} placeholder="Repo URL" />
+                                                                        </div>
+                                                                        <div className="space-y-2">
+                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Live Deploy Link</label>
+                                                                            <input disabled={isReadOnly} className="w-full bg-gray-50 border-0 rounded-[1.5rem] px-6 py-4 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none disabled:opacity-50" value={formData.deployLink || ""} onChange={e => setFormData({ ...formData, deployLink: e.target.value })} placeholder="Vercel / Firebase URL" />
                                                                         </div>
                                                                     </div>
-                                                                    <div className="relative w-full h-4 bg-gray-100/80 rounded-full overflow-hidden flex items-center shadow-inner cursor-pointer" onClick={() => { if (!isReadOnly) { const el = document.getElementById('progress-slider-2'); if (el) el.focus(); } }}>
-                                                                        <div
-                                                                            className="absolute left-0 h-full bg-gradient-to-r from-gray-900 to-black rounded-full transition-all duration-300 pointer-events-none"
-                                                                            style={{ width: `${formData.progress || 0}%` }}
-                                                                        />
-                                                                        <input
-                                                                            id="progress-slider-2"
-                                                                            type="range"
-                                                                            min="0"
-                                                                            max="100"
-                                                                            step="1"
-                                                                            disabled={isReadOnly}
-                                                                            value={formData.progress || 0}
-                                                                            onChange={e => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                                                                        />
+                                                                    <div className="space-y-2 mb-8">
+                                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Detailed Solution & Implementation</label>
+                                                                        <textarea disabled={isReadOnly} rows="5" className="w-full bg-gray-50 border-0 rounded-[2rem] px-8 py-6 text-sm font-bold focus:ring-8 focus:ring-black/5 outline-none resize-none disabled:opacity-50" value={formData.solution} onChange={e => setFormData({ ...formData, solution: e.target.value })} placeholder="Explain your implementation, architecture, and how it solves the problem..." />
                                                                     </div>
-                                                                </div>
+
+                                                                    <div className="space-y-4 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                                                                        <div className="flex justify-between items-center px-2">
+                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em]">Integration Level</label>
+                                                                            <div className="flex items-center group bg-white px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm transition-all focus-within:border-black">
+                                                                                <input
+                                                                                    type="number"
+                                                                                    min="0"
+                                                                                    max="100"
+                                                                                    disabled={isReadOnly}
+                                                                                    value={formData.progress || 0}
+                                                                                    onChange={e => setFormData({ ...formData, progress: isNaN(parseInt(e.target.value)) ? '' : Math.min(100, Math.max(0, parseInt(e.target.value))) })}
+                                                                                    className="w-8 text-right bg-transparent text-sm font-black text-black outline-none disabled:opacity-50 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none m-0 p-0"
+                                                                                    style={{ MozAppearance: 'textfield' }}
+                                                                                />
+                                                                                <span className="text-sm font-black text-gray-400 ml-0.5 group-focus-within:text-black transition-colors">%</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="relative w-full h-4 bg-gray-100/80 rounded-full overflow-hidden flex items-center shadow-inner cursor-pointer" onClick={() => { if (!isReadOnly) { const el = document.getElementById('progress-slider-2'); if (el) el.focus(); } }}>
+                                                                            <div
+                                                                                className="absolute left-0 h-full bg-gradient-to-r from-gray-900 to-black rounded-full transition-all duration-300 pointer-events-none"
+                                                                                style={{ width: `${formData.progress || 0}%` }}
+                                                                            />
+                                                                            <input
+                                                                                id="progress-slider-2"
+                                                                                type="range"
+                                                                                min="0"
+                                                                                max="100"
+                                                                                step="1"
+                                                                                disabled={isReadOnly}
+                                                                                value={formData.progress || 0}
+                                                                                onChange={e => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
+                                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </>
                                                             )}
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
                                             </div>
                                         )}
-                                        <div className="pt-8 flex gap-6 sticky bottom-0 bg-white py-6 border-t border-gray-50">
-                                            <button type="button" onClick={resetModal} className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-300">Abort</button>
+                                        <div className="pt-8 flex gap-6 sticky bottom-0 bg-white py-6 border-t border-gray-50 z-20">
+                                            <button type="button" onClick={resetModal} className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors">Cancel</button>
                                             <button
                                                 type="submit"
                                                 disabled={!formData.title}
-                                                className="flex-[3] py-4 bg-black text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+                                                className="flex-[3] py-4 bg-black text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
                                             >
-                                                {formData.progress === 100 ? "Update Completed Intel" : (formData.id ? "Sync Changes" : "Initiate Operation")}
+                                                {formData.progress === 100 ? "Update Completed" : (formData.id ? "Sync Changes" : "Submit")}
                                             </button>
                                         </div>
                                     </form>

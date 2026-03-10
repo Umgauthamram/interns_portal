@@ -66,9 +66,11 @@
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -116,9 +118,46 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-body {
+html {
   background-color: hsl(var(--background));
+  font-size: 112%;
+  /* slightly larger base — scales rem units up ~12.5% globally */
+}
+
+body {
+  background-color: transparent !important;
   color: hsl(var(--foreground));
+  font-size: 1rem;
+}
+
+/* Boost tiny arbitrary label sizes used throughout the project */
+[class*="text-[8px]"] {
+  font-size: 11px !important;
+}
+
+[class*="text-[9px]"] {
+  font-size: 12px !important;
+}
+
+[class*="text-[10px]"] {
+  font-size: 12.5px !important;
+}
+
+[class*="text-[11px]"] {
+  font-size: 13px !important;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.25;
+  /* slightly increased so it's clearly visible */
+  pointer-events: none;
+  background-image: url("/background7.svg");
+  background-size: 100px;
+  background-repeat: repeat;
 }
 
 :root {

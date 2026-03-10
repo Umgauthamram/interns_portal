@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Link as LinkIcon, Clock, AlignLeft } from "lucide-react"
+import { Link as LinkIcon, Clock, AlignLeft, CheckCircle2, AlertTriangle, Calendar as CalendarIcon, ExternalLink } from "lucide-react"
 
 const colStartClasses = [
   "",
@@ -47,7 +47,8 @@ const colStartClasses = [
 ]
 
 export function FullScreenCalendar({
-  data
+  data,
+  onEventAction
 }) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(today)
@@ -78,7 +79,7 @@ export function FullScreenCalendar({
     <div className="flex flex-1 flex-col">
       {/* Calendar Header */}
       <div
-        className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
+        className="flex flex-col space-y-3 p-3 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
         <div className="flex flex-auto">
           <div className="flex items-center gap-4">
             <div
@@ -257,7 +258,7 @@ export function FullScreenCalendar({
                   onClick={() => setSelectedDay(day)}
                   className={cn(
                     dayIdx === 0 && colStartClasses[getDay(day)],
-                    "bg-white relative flex flex-col hover:bg-gray-50/80 transition-colors focus:z-10 min-h-[120px]",
+                    "bg-white relative flex flex-col hover:bg-gray-50/80 transition-colors focus:z-10 min-h-[75px]",
                     !isEqual(day, selectedDay) && "hover:bg-gray-50"
                   )}>
                   <header className="flex items-center justify-between p-2.5">
@@ -294,14 +295,23 @@ export function FullScreenCalendar({
                       .map((day) => (
                         <div key={day.day.toString()} className="space-y-1.5">
                           {day.events.slice(0, 2).map((event) => {
+                            const isReview = event.tag === 'review';
                             const eventContent = (
                               <div
-                                className="flex flex-col items-start gap-1 rounded-xl bg-gray-50 border border-gray-200 p-2.5 text-[9px] leading-snug group-hover:border-black transition-colors w-full cursor-pointer hover:shadow-md hover:bg-white"
+                                className={`flex flex-col items-start gap-1 rounded-xl border p-2.5 text-[9px] leading-snug transition-colors w-full cursor-pointer hover:shadow-md hover:border-black ${isReview
+                                  ? 'bg-blue-50/50 border-blue-100 hover:bg-blue-50'
+                                  : 'bg-gray-50 border-gray-200 hover:bg-white'
+                                  }`}
                               >
-                                <p className="font-black uppercase tracking-widest text-gray-900 truncate w-full">
-                                  {event.name}
-                                </p>
-                                <p className="font-bold text-gray-400">
+                                <div className="flex items-center justify-between w-full gap-1">
+                                  <p className={`font-black uppercase tracking-widest truncate ${isReview ? 'text-blue-900' : 'text-gray-900'}`}>
+                                    {event.name}
+                                  </p>
+                                  {isReview && (
+                                    <span className="shrink-0 px-1 py-0.5 bg-blue-100 text-blue-700 rounded text-[7px] font-black uppercase tracking-widest">RVW</span>
+                                  )}
+                                </div>
+                                <p className={`font-bold ${isReview ? 'text-blue-500' : 'text-gray-400'}`}>
                                   {event.time}
                                 </p>
                               </div>
@@ -360,6 +370,31 @@ export function FullScreenCalendar({
                                       )}
                                     </div>
 
+                                    {event.tag === 'review' && event.status === 'Scheduled' && (
+                                      <div className="flex items-center gap-3">
+                                        <button
+                                          onClick={() => onEventAction?.('attended', event)}
+                                          className="flex-1 inline-flex justify-center items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-3.5 rounded-xl border border-emerald-100 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100/80 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                                        >
+                                          <CheckCircle2 className="w-4 h-4" /> Attended
+                                        </button>
+                                        <button
+                                          onClick={() => onEventAction?.('missed', event)}
+                                          className="flex-1 inline-flex justify-center items-center gap-2 bg-red-50 text-red-700 px-4 py-3.5 rounded-xl border border-red-100 text-[10px] font-black uppercase tracking-widest hover:bg-red-100/80 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                                        >
+                                          <AlertTriangle className="w-4 h-4" /> Missed
+                                        </button>
+                                        <button
+                                          onClick={() => onEventAction?.('postpone_request', event)}
+                                          className="inline-flex justify-center items-center bg-gray-50 text-gray-700 w-12 h-[42px] rounded-xl border border-gray-200 hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                                          aria-label="Postpone"
+                                          title="Postpone"
+                                        >
+                                          <CalendarIcon className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    )}
+
                                     {event.meetingLink && (
                                       <a
                                         href={event.meetingLink}
@@ -367,7 +402,7 @@ export function FullScreenCalendar({
                                         rel="noopener noreferrer"
                                         className="w-full inline-flex justify-center items-center gap-2 bg-black text-white px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-transform hover:scale-[1.02] active:scale-95 shadow-xl hover:shadow-2xl"
                                       >
-                                        <LinkIcon className="w-4 h-4" />
+                                        <ExternalLink className="w-4 h-4" />
                                         Launch Communication
                                       </a>
                                     )}
