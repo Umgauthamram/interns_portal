@@ -14,7 +14,8 @@ const WeeklyReviewSchema = new mongoose.Schema({
     status: { type: String, enum: ['Scheduled', 'Completed', 'Cancelled'], default: 'Scheduled' },
     progressRating: { type: String, enum: ['', 'Excellent', 'On Track', 'Needs Attention', 'Behind'], default: '' },
     progressNote: { type: String, default: '' },
-    emailSent: { type: Boolean, default: false },
+    reminder24hSent: { type: Boolean, default: false },
+    reminder1hSent: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default mongoose.models.WeeklyReview || mongoose.model('WeeklyReview', WeeklyReviewSchema);

@@ -47,8 +47,8 @@ export async function GET(req) {
         const meetingAt = new Date(r.scheduledDate);
         meetingAt.setHours(h, m, 0, 0);
 
-        const is1h = meetingAt >= in1h_from && meetingAt <= in1h_to;
-        const is24h = meetingAt >= in24h_from && meetingAt <= in24h_to;
+        const is1h = meetingAt >= in1h_from && meetingAt <= in1h_to && !r.reminder1hSent;
+        const is24h = meetingAt >= in24h_from && meetingAt <= in24h_to && !r.reminder24hSent;
 
         if (!is1h && !is24h) continue;
 
@@ -69,6 +69,11 @@ export async function GET(req) {
         try {
             await sendMeetingReminder({ ...base, to: r.internEmail, recipientName: r.internName, adminName, role: 'intern' });
             await sendMeetingReminder({ ...base, to: r.assignedAdmin, recipientName: adminName, adminName, role: 'admin' });
+
+            if (is1h) r.reminder1hSent = true;
+            if (is24h) r.reminder24hSent = true;
+            await r.save();
+
             sent += 2;
         } catch (e) {
             console.error('Reminder email error (WeeklyReview):', e.message);
@@ -84,8 +89,8 @@ export async function GET(req) {
             const meetingAt = new Date(s.date);
             meetingAt.setHours(h, m, 0, 0);
 
-            const is1h = meetingAt >= in1h_from && meetingAt <= in1h_to;
-            const is24h = meetingAt >= in24h_from && meetingAt <= in24h_to;
+            const is1h = meetingAt >= in1h_from && meetingAt <= in1h_to && !s.reminder1hSent;
+            const is24h = meetingAt >= in24h_from && meetingAt <= in24h_to && !s.reminder24hSent;
             if (!is1h && !is24h) continue;
 
             const reminderType = is1h ? '⏰ 1 Hour Reminder' : '📅 Tomorrow Reminder';
@@ -107,6 +112,11 @@ export async function GET(req) {
             try {
                 await sendMeetingReminder({ ...base, to: internEmail, recipientName: internName, adminName, role: 'intern' });
                 await sendMeetingReminder({ ...base, to: s.adminEmail, recipientName: adminName, adminName, role: 'admin' });
+
+                if (is1h) s.reminder1hSent = true;
+                if (is24h) s.reminder24hSent = true;
+                await s.save();
+
                 sent += 2;
             } catch (e) {
                 console.error('Reminder email error (Schedule):', e.message);

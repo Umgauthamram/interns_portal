@@ -1,8 +1,1 @@
-{
-    "crons": [
-        {
-            "path": "/api/cron/reminders?key=ds_intern_cron_2026",
-            "schedule": "*/30 * * * *"
-        }
-    ]
-}
+{}

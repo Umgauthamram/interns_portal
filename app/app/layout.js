@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ReportIssue } from "@/components/ReportIssue";
 import { SessionManager } from "@/components/SessionManager";
+import { SystemCron } from "@/components/SystemCron";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionManager />
+        <SystemCron />
         {children}
         <Toaster position="top-center" />
         <ReportIssue />
