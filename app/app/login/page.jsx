@@ -84,7 +84,7 @@ export default function LoginPage() {
                         </svg>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome Back</h1>
-                    <p className="text-gray-500 mt-2 text-sm">Sign in to your InternPortal account</p>
+                    <p className="text-gray-500 mt-2 text-sm">Sign in to your Intern Portal account</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">

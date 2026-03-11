@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserPlus, Shield, Trash2, RefreshCw } from "lucide-react";
+import { UserPlus, Shield, Trash2, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export default function ManageAdminsPage() {
@@ -15,6 +15,7 @@ export default function ManageAdminsPage() {
         phone: "",
         password: "TempPassword123!"
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         fetchAdmins();
@@ -116,14 +117,23 @@ export default function ManageAdminsPage() {
                         </div>
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Default Password</label>
-                            <input
-                                className="w-full px-4 py-3 mt-1 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 text-gray-900 text-sm"
-                                placeholder="Password"
-                                type="password"
-                                value={adminForm.password}
-                                onChange={e => setAdminForm({ ...adminForm, password: e.target.value })}
-                                required
-                            />
+                            <div className="relative mt-1">
+                                <input
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 text-gray-900 text-sm pr-12"
+                                    placeholder="Password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={adminForm.password}
+                                    onChange={e => setAdminForm({ ...adminForm, password: e.target.value })}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                         </div>
 
                         <button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/10 active:scale-[0.98]">

@@ -75,28 +75,9 @@ export async function scheduleMonthlyReviews(intern, startDate, meetLink = DEFAU
             emailSent: false,
         });
 
-        // Send initial confirmation emails async
-        const emailBase = {
-            internName: intern.fullName,
-            date: target.toISOString(),
-            time: slotTime,
-            meetingLink: meetLink,
-            description: `Weekly Review — ${weekLabel}`,
-        };
-
-        const adminUser = await User.findOne({ email: adminEmail }).select('fullName');
-        const adminName = adminUser?.fullName || adminEmail;
-
-        sendMeetingReminder({
-            ...emailBase, to: intern.email,
-            recipientName: intern.fullName, adminName, role: 'intern',
-        }).then(() => WeeklyReview.findByIdAndUpdate(review._id, { emailSent: true }))
-            .catch(e => console.error('Intern confirmation email error:', e));
-
-        sendMeetingReminder({
-            ...emailBase, to: adminEmail,
-            recipientName: adminName, adminName, role: 'admin',
-        }).catch(e => console.error('Admin confirmation email error:', e));
+        // Removed the initial confirmation emails per new instruction.
+        // Reminders will naturally be picked up by the chron job exactly 24 hours 
+        // and 1 hour heavily before the specific week hits.
 
         created.push(review);
     }

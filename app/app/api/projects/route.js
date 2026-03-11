@@ -31,7 +31,7 @@ export async function POST(req) {
         await dbConnect();
         const body = await req.json();
 
-        const { internEmail, title, description, colorHex, techStack, repoLink, deployLink, solution, progress, track, isPreset } = body;
+        const { internEmail, title, description, colorHex, techStack, repoLink, deployLink, documentFile, documentLink, solution, progress, track, category, isPreset } = body;
 
         if (!internEmail || !title || !description) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
@@ -47,15 +47,20 @@ export async function POST(req) {
             internName: user.fullName,
             internEmail: user.email,
             track,
+            category,
             projectName: title,
             description,
             colorHex,
             techStack,
             repoLink,
             deployLink,
+            documentFile,
+            documentLink,
             solution,
             progress: progress || 10,
-            status: 'Pending',
+            // Preset projects (from admin pool) are auto-approved.
+            // Only custom project submissions go through pending review.
+            status: isPreset ? 'Approved' : 'Pending',
             projectType: isPreset ? 'preset' : 'custom'
         });
 
@@ -70,13 +75,14 @@ export async function PUT(req) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { id, title, description, colorHex, techStack, repoLink, deployLink, solution, progress, status, adminFeedback } = body;
+        const { id, title, description, colorHex, techStack, repoLink, deployLink, documentFile, documentLink, solution, progress, status, adminFeedback, category } = body;
 
         if (!id) {
             return NextResponse.json({ message: "Project ID required" }, { status: 400 });
         }
 
-        const updateData = { projectName: title, description, colorHex, techStack, repoLink, deployLink, solution, progress };
+        const updateData = { projectName: title, description, colorHex, techStack, repoLink, deployLink, documentFile, documentLink, solution, progress };
+        if (category) updateData.category = category;
         if (status) updateData.status = status;
         if (adminFeedback !== undefined) updateData.adminFeedback = adminFeedback;
 

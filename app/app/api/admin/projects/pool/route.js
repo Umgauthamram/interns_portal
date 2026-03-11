@@ -6,10 +6,22 @@ export async function GET(req) {
     try {
         await dbConnect();
         const { searchParams } = new URL(req.url);
-        const track = searchParams.get('track');
+        const trackParam = searchParams.get('track');
 
         let query = {};
-        if (track) query.track = track;
+        if (trackParam) {
+            let regexPattern = trackParam;
+            // Handle variations between admin naming and intern profile naming
+            if (trackParam.includes("Blockchain")) {
+                regexPattern = "Blockchain";
+            } else if (trackParam.includes("Gen")) {
+                regexPattern = "Gen\\s*AI";
+            } else if (trackParam.includes("App Development") || trackParam.includes("App Dev")) {
+                regexPattern = "App Development";
+            }
+
+            query.track = { $regex: new RegExp(regexPattern, 'i') };
+        }
 
         const projects = await ProjectPool.find(query).sort({ createdAt: -1 });
         return NextResponse.json(projects, { status: 200 });

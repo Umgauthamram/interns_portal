@@ -23,6 +23,12 @@ const ProjectPoolSchema = new mongoose.Schema({
     startDate: String,
     endDate: String,
     milestones: String,
+    documentFile: String,
+    documentLink: String,
+    timeline: String,
+    repoLink: String,
+    demoLink: String,
+    dynamicFields: { type: Object, default: {} },
     status: { type: String, default: 'Active' },
     deadline: { type: String, default: '1 Month' },
     enrolled: { type: Number, default: 0 }

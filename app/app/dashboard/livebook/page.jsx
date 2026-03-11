@@ -83,15 +83,51 @@ export default function LiveBookDashboard() {
 
     const [courses, setCourses] = useState([]);
     const [topics, setTopics] = useState([]);
+    const [userTrack, setUserTrack] = useState("");
 
     useEffect(() => {
         const fetchContent = async () => {
+            const email = localStorage.getItem("userEmail");
+            let uTrack = "";
+            try {
+                if (email) {
+                    const userRes = await fetch(`/api/user/me?email=${email}`);
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        uTrack = userData.track || "";
+                        setUserTrack(uTrack);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
             try {
                 const [cRes, tRes] = await Promise.all([
                     fetch('/api/admin/content/courses'),
                     fetch('/api/admin/content/topics')
                 ]);
-                if (cRes.ok) setCourses(await cRes.json());
+                if (cRes.ok) {
+                    const allCourses = await cRes.json();
+
+                    const filteredCourses = allCourses.filter(c => {
+                        if (!c.tracks || c.tracks.length === 0) return true;
+
+                        return c.tracks.some(adminConfiguredTrack => {
+                            const adminT = adminConfiguredTrack || "";
+                            const tr = uTrack || "";
+
+                            // High flexibility error-tolerant regex matching
+                            if (tr.includes("Blockchain") && adminT.includes("Blockchain")) return true;
+                            if (tr.includes("Gen") && adminT.includes("Gen")) return true;
+                            if (tr.includes("App Development") && adminT.includes("App Development")) return true;
+
+                            return adminT.toLowerCase() === tr.toLowerCase();
+                        });
+                    });
+
+                    setCourses(filteredCourses);
+                }
                 if (tRes.ok) setTopics((await tRes.json()).filter(t => t.status === "Published"));
             } catch (err) {
                 console.error("Fetch content error:", err);

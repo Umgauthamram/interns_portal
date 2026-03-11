@@ -97,11 +97,6 @@ export default function AdminDashboard() {
             link: "/admin/users"
         },
         {
-            label: "Active Users", value: stats.activeNow, icon: Activity,
-            accent: "from-emerald-500 to-emerald-600", badge: "Online now",
-            link: "/admin/users"
-        },
-        {
             label: "Projects Done", value: stats.placements, icon: FolderKanban,
             accent: "from-violet-500 to-violet-600", badge: "Completed",
             link: "/admin/projects"
@@ -123,7 +118,7 @@ export default function AdminDashboard() {
         <div className="space-y-8 pb-8">
 
             {/* ── Stat Cards ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {STAT_CARDS.map((card, i) => {
                     const Icon = card.icon;
                     return (
@@ -201,9 +196,14 @@ export default function AdminDashboard() {
 
                 {/* Track Split — 1 col */}
                 <motion.div {...fadeUp(0.3)} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
-                    <div>
-                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Track Split</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Intern track distribution</p>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Track Split</h3>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Intern track distribution</p>
+                        </div>
+                        <button onClick={() => router.push('/admin/tracks')} className="text-[10px] font-black text-blue-500 hover:text-blue-700 uppercase tracking-widest px-4 py-2 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all shadow-sm">
+                            Manage Tracks
+                        </button>
                     </div>
 
                     {loading ? (
@@ -247,6 +247,7 @@ export default function AdminDashboard() {
                         {[
                             { label: "Manage Users", icon: Users, link: "/admin/users" },
                             { label: "View Projects", icon: FolderKanban, link: "/admin/projects" },
+                            { label: "Manage Tracks", icon: Award, link: "/admin/tracks" },
                             { label: "Open Tickets", icon: CheckCircle2, link: "/admin/tickets" },
                         ].map(({ label, icon: Icon, link }) => (
                             <button key={label} onClick={() => router.push(link)}

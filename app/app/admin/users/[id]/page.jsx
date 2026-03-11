@@ -10,35 +10,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 
-/* ── Avatar helper: gender-based DiceBear cartoon, onError fallback ── */
-function InternAvatar({ user }) {
-    const gender = user.gender?.toLowerCase();
-    // Pick a DiceBear style that is clearly gendered
-    // avataaars has male/female options via `accessories`, but safest approach:
-    // use two clearly different seeds per gender
-    const dicebear = (seed) =>
-        `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
-    const primary = user.profilePicture
-        || (user.avatarSeed
-            ? dicebear(user.avatarSeed)
-            : gender === 'female'
-                ? `https://avatar.iran.liara.run/public/girl?username=${encodeURIComponent(user.fullName || user.email)}`
-                : `https://avatar.iran.liara.run/public/boy?username=${encodeURIComponent(user.fullName || user.email)}`);
-
-    const fallback = dicebear(user.fullName || user.email || 'user');
-
-    return (
-        <div className="w-36 h-36 shrink-0 rounded-[2.5rem] bg-gray-100 shadow-xl shadow-gray-200/60 border-[4px] border-white overflow-hidden relative z-20">
-            <img
-                src={primary}
-                alt={user.fullName}
-                className="w-full h-full object-cover"
-                onError={e => { e.target.onerror = null; e.target.src = fallback; }}
-            />
-        </div>
-    );
-}
 
 export default function InternDetailsPage() {
     const params = useParams();
@@ -235,7 +207,13 @@ export default function InternDetailsPage() {
 
                 {/* Avatar + Info */}
                 <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
-                    <InternAvatar user={user} />
+                    <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-50 rounded-[2.5rem] border-2 border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-center shrink-0 z-20">
+                        {user.profilePicture ? (
+                            <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover rounded-[2.5rem]" />
+                        ) : (
+                            <User className="w-12 h-12 text-gray-300" strokeWidth={1.5} />
+                        )}
+                    </div>
 
                     <div className="flex-1 space-y-5 w-full pt-2">
                         <div>

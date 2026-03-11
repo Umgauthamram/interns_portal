@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { toast } from "react-hot-toast";
 
+// Pages that should render without the sidebar (full-screen)
+const SIDEBAR_FREE_ROUTES = ["/dashboard/certificate"];
+
 export default function DashboardLayout({ children }) {
     const router = useRouter();
+    const pathname = usePathname();
     const [authorized, setAuthorized] = useState(false);
+
+    const hideSidebar = SIDEBAR_FREE_ROUTES.some(r => pathname?.startsWith(r));
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -22,21 +28,18 @@ export default function DashboardLayout({ children }) {
 
             // Admin users are allowed here, do not redirect
             if (role === 'admin') {
-                // Allow admin to bypass API check or we can just proceed to let the API verify 
                 setAuthorized(true);
                 return;
             }
 
-            // Verify with server for non-admins (or admins who didn't get caught by roles above)
+            // Verify with server for non-admins
             try {
                 const res = await fetch(`/api/user/me?email=${email}`);
                 if (res.ok) {
                     const user = await res.json();
 
-                    // Allow both 'user' and 'admin' roles to access dashboard
-                    if (user.role === 'admin' || user.role === 'user') {
+                    if (user.role === 'admin' || user.role === 'intern' || user.role === 'user') {
                         setAuthorized(true);
-                        // If they are an admin, we don't redirect them away anymore
                     } else {
                         throw new Error("Invalid role");
                     }
@@ -63,6 +66,11 @@ export default function DashboardLayout({ children }) {
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
             </div>
         );
+    }
+
+    // Certificate (and other sidebar-free pages) → full screen, no nav
+    if (hideSidebar) {
+        return <>{children}</>;
     }
 
     return (

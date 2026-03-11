@@ -80,9 +80,13 @@ export default function AdminUsersPage() {
                                 <tr key={user._id} className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => router.push(`/admin/users/${user._id}`)}>
                                     <td className="px-8 py-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-gray-500">
-                                                {user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'}
-                                            </div>
+                                            {user.profilePicture ? (
+                                                <img src={user.profilePicture} alt={user.fullName} className="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-gray-500 shadow-sm border border-gray-100">
+                                                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'}
+                                                </div>
+                                            )}
                                             <div>
                                                 <div className="font-bold text-gray-900 text-sm">{user.fullName}</div>
                                                 <div className="text-xs text-gray-400 font-medium flex items-center gap-1">

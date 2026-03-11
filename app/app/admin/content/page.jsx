@@ -42,19 +42,28 @@ export default function AdminLiveBookPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
     const [isAddModuleModalOpen, setIsAddModuleModalOpen] = useState(false);
-    const [newCourseData, setNewCourseData] = useState({ title: "", desc: "" });
+    const [newCourseData, setNewCourseData] = useState({ title: "", desc: "", tracks: [] });
     const [newModuleData, setNewModuleData] = useState({ title: "", desc: "" });
     const [courses, setCourses] = useState([]);
+    const [availableTracks, setAvailableTracks] = useState([]);
 
     useEffect(() => {
         const fetchContent = async () => {
             try {
-                const [cRes, tRes] = await Promise.all([
+                const [cRes, tRes, trRes] = await Promise.all([
                     fetch('/api/admin/content/courses'),
-                    fetch('/api/admin/content/topics')
+                    fetch('/api/admin/content/topics'),
+                    fetch('/api/admin/tracks')
                 ]);
                 if (cRes.ok) setCourses(await cRes.json());
                 if (tRes.ok) setTopics(await tRes.json());
+                if (trRes.ok) {
+                    const data = await trRes.json();
+                    const extracted = [];
+                    if (data.CODING) data.CODING.forEach(t => extracted.push(t.name));
+                    if (data.RESEARCH) data.RESEARCH.forEach(t => extracted.push(t.name));
+                    setAvailableTracks(extracted);
+                }
             } catch (err) {
                 console.error("Fetch content error:", err);
             }
@@ -250,8 +259,19 @@ export default function AdminLiveBookPage() {
                                     </div>
                                     <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter mb-2">{course.title}</h3>
                                     <p className="text-xs text-gray-400 font-medium mb-6">{course.desc}</p>
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-widest">
-                                        <Layers className="w-4 h-4" /> {course.modules.length} Modules
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                                            <Layers className="w-4 h-4" /> {course.modules.length} Modules
+                                        </div>
+                                        <div className="flex flex-wrap gap-1">
+                                            {(!course.tracks || course.tracks.length === 0) ? (
+                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-400 rounded text-[8px] font-black uppercase tracking-widest shadow-sm">All Tracks</span>
+                                            ) : (
+                                                course.tracks.map(t => (
+                                                    <span key={t} className="px-2 py-0.5 bg-black text-white rounded text-[8px] font-black uppercase tracking-widest shadow-sm">{t}</span>
+                                                ))
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -612,10 +632,37 @@ export default function AdminLiveBookPage() {
                                         placeholder="Core objective of this asset..."
                                     />
                                 </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Assigned Tracks</label>
+                                    <div className="flex flex-wrap gap-2 pt-1 max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                                        {availableTracks.map(track => {
+                                            const isSelected = newCourseData.tracks.includes(track);
+                                            return (
+                                                <button
+                                                    key={track}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const fresh = [...newCourseData.tracks];
+                                                        if (isSelected) {
+                                                            fresh.splice(fresh.indexOf(track), 1);
+                                                        } else {
+                                                            fresh.push(track);
+                                                        }
+                                                        setNewCourseData({ ...newCourseData, tracks: fresh });
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shadow-sm ${isSelected ? 'bg-black text-white hover:bg-gray-800' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                                >
+                                                    {track}
+                                                </button>
+                                            );
+                                        })}
+                                        {availableTracks.length === 0 && <span className="text-xs text-gray-400">Loading tracks...</span>}
+                                    </div>
+                                </div>
                                 <button
                                     onClick={async () => {
                                         if (newCourseData.title.trim()) {
-                                            const newCourse = { title: newCourseData.title, desc: newCourseData.desc, modules: [] };
+                                            const newCourse = { title: newCourseData.title, desc: newCourseData.desc, tracks: newCourseData.tracks, modules: [] };
                                             try {
                                                 const res = await fetch('/api/admin/content/courses', {
                                                     method: 'POST',
@@ -625,7 +672,7 @@ export default function AdminLiveBookPage() {
                                                 if (res.ok) {
                                                     const saved = await res.json();
                                                     setCourses(prev => [...prev, saved]);
-                                                    setNewCourseData({ title: "", desc: "" });
+                                                    setNewCourseData({ title: "", desc: "", tracks: [] });
                                                     setIsAddCourseModalOpen(false);
                                                     toast.success("Intelligence Asset Initialized.");
                                                 }

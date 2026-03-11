@@ -12,7 +12,7 @@ import { DropdownDatePicker } from "@/components/ui/dropdown-date-picker";
 export default function RegistrationPage() {
     const router = useRouter();
     const [step, setStep] = useState(1);
-    const totalSteps = 4;
+    const totalSteps = 6;
 
     const prices = {
         "3-months": "2,999",
@@ -21,22 +21,29 @@ export default function RegistrationPage() {
     };
 
     const [formData, setFormData] = useState({
-        fullName: "",
-        email: "",
-        password: "",
-        dob: "",
-        phone: "",
-        gender: "",
-        address: "",
-        track: "",
-        duration: "",
-        mode: "remote",
-        expandedRnD: false // New state for accordion
+        fullName: "", email: "", password: "",
+        phone: "", gender: "", dob: "",
+        aadhaarNumber: "", passportPhoto: "", aadhaarCard: "",
+        educationQualification: "", courseName: "", collegeName: "", workingDetails: "", resumeDocument: "",
+        track: "", duration: "", mode: "remote"
     });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileUpload = (e, fieldName) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error("File size must be under 2MB");
+            e.target.value = null;
+            return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => setFormData(prev => ({ ...prev, [fieldName]: reader.result }));
+        reader.readAsDataURL(file);
     };
 
     useEffect(() => {
@@ -50,23 +57,20 @@ export default function RegistrationPage() {
     const handleNext = (e) => {
         e.preventDefault();
 
-        if (step === 1) {
-            if (!formData.fullName || !formData.email || !formData.password) {
-                toast.error("Please fill in all fields");
-                return;
-            }
+        if (step === 1 && (!formData.fullName || !formData.email || !formData.password)) {
+            toast.error("Please fill in all details for this section."); return;
         }
-        if (step === 2) {
-            if (!formData.dob || !formData.phone || !formData.gender || !formData.address) {
-                toast.error("Please fill in all details");
-                return;
-            }
+        if (step === 2 && (!formData.phone || !formData.gender || !formData.dob)) {
+            toast.error("Please fill in Mobile, Gender, and DOB."); return;
         }
-        if (step === 3) {
-            if (!formData.track || !formData.duration) {
-                toast.error("Please select track and duration");
-                return;
-            }
+        if (step === 3 && (!formData.aadhaarNumber || !formData.passportPhoto || !formData.aadhaarCard)) {
+            toast.error("Please provide Aadhaar and upload both verification documents."); return;
+        }
+        if (step === 4 && (!formData.educationQualification || !formData.courseName || !formData.resumeDocument)) {
+            toast.error("Please fill in at least Qualification, Course, and upload CV."); return;
+        }
+        if (step === 5 && (!formData.track || !formData.duration)) {
+            toast.error("Please select a track and duration."); return;
         }
 
         if (step < totalSteps) {
@@ -114,10 +118,9 @@ export default function RegistrationPage() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (step === 4) {
+        if (step === 6) {
             handlePayment();
         } else {
-            // Fallback for steps 1-3
             console.log(formData);
         }
     };
@@ -127,9 +130,9 @@ export default function RegistrationPage() {
 
             {/* Premium Animated Gradient Blobs */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-purple-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '7s'}}></div>
-                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-sky-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '5s'}}></div>
-                <div className="absolute bottom-[-20%] left-[20%] w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] bg-indigo-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{animationDuration: '9s'}}></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-purple-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{ animationDuration: '7s' }}></div>
+                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-sky-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{ animationDuration: '5s' }}></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] bg-indigo-300/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-pulse" style={{ animationDuration: '9s' }}></div>
             </div>
 
             <div className="w-full max-w-3xl mx-auto space-y-8 bg-white/70 backdrop-blur-3xl lg:px-12 pb-12 pt-16 rounded-[2.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-white/60 min-h-[500px] flex flex-col justify-center relative z-10 transition-all overflow-hidden m-4">
@@ -147,14 +150,18 @@ export default function RegistrationPage() {
                     <h2 className="text-3xl font-bold text-black tracking-tight">
                         {step === 1 && "Personal Details"}
                         {step === 2 && "Profile Information"}
-                        {step === 3 && "Preferences"}
-                        {step === 4 && "Review & Payment"}
+                        {step === 3 && "Identity Verification"}
+                        {step === 4 && "Education Details"}
+                        {step === 5 && "Preferences"}
+                        {step === 6 && "Review & Payment"}
                     </h2>
                     <p className="text-gray-500 -mt-4">
                         {step === 1 && "Let's start with your basic information."}
-                        {step === 2 && "Tell us a bit more about yourself."}
-                        {step === 3 && "Customize your internship experience."}
-                        {step === 4 && "Finalize your registration."}
+                        {step === 2 && "Enter your contact and demographic details."}
+                        {step === 3 && "Securely verify your official identity."}
+                        {step === 4 && "Tell us about your academic background."}
+                        {step === 5 && "Customize your internship experience."}
+                        {step === 6 && "Finalize your registration setup."}
                     </p>
                 </div>
 
@@ -250,23 +257,116 @@ export default function RegistrationPage() {
                                         <option value="Other">Other</option>
                                     </select>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Step 3: Identity Verification */}
+                        {step === 3 && (
+                            <div className="space-y-6 animate-fade-in max-w-2xl mx-auto w-full">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Current Address</label>
-                                    <textarea
-                                        required
-                                        name="address"
-                                        value={formData.address}
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Aadhaar Number</label>
+                                    <input
+                                        type="text"
+                                        name="aadhaarNumber"
+                                        value={formData.aadhaarNumber}
                                         onChange={handleChange}
-                                        rows="2"
-                                        placeholder="123 Main St, City, Country"
-                                        className="w-full text-black px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all resize-none"
-                                    ></textarea>
+                                        placeholder="1234 5678 9012"
+                                        required
+                                        className="w-full text-black px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Upload Passport Size Photo</label>
+                                    <input
+                                        type="file"
+                                        accept="image/png, image/jpeg"
+                                        onChange={(e) => handleFileUpload(e, 'passportPhoto')}
+                                        required
+                                        className="w-full text-black px-4 py-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer text-sm"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Upload Copy of Aadhaar Card</label>
+                                    <input
+                                        type="file"
+                                        accept="image/png, image/jpeg, application/pdf"
+                                        onChange={(e) => handleFileUpload(e, 'aadhaarCard')}
+                                        required
+                                        className="w-full text-black px-4 py-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer text-sm"
+                                    />
                                 </div>
                             </div>
                         )}
 
-                        {/* Step 3: Internship Preferences */}
-                        {step === 3 && (
+                        {/* Step 4: Education & Professional Details */}
+                        {step === 4 && (
+                            <div className="space-y-6 animate-fade-in max-w-3xl mx-auto w-full">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Education Qualification</label>
+                                        <select
+                                            required
+                                            name="educationQualification"
+                                            value={formData.educationQualification}
+                                            onChange={handleChange}
+                                            className="w-full text-black px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all bg-white"
+                                        >
+                                            <option value="">Select Status</option>
+                                            <option value="Pursuing">Pursuing</option>
+                                            <option value="Completed">Completed</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Course / Degree Name</label>
+                                        <input
+                                            type="text"
+                                            name="courseName"
+                                            value={formData.courseName}
+                                            onChange={handleChange}
+                                            placeholder="e.g. B.Tech Computer Science"
+                                            required
+                                            className="w-full text-black px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">College / Institution Name (Or none)</label>
+                                    <input
+                                        type="text"
+                                        name="collegeName"
+                                        value={formData.collegeName}
+                                        onChange={handleChange}
+                                        placeholder="Institution Name"
+                                        className="w-full text-black px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Working Details (if applicable or none)</label>
+                                    <input
+                                        type="text"
+                                        name="workingDetails"
+                                        value={formData.workingDetails}
+                                        onChange={handleChange}
+                                        placeholder="Current job/internship details"
+                                        className="w-full text-black px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Upload CV / Resume</label>
+                                    <input
+                                        type="file"
+                                        accept="application/pdf"
+                                        onChange={(e) => handleFileUpload(e, 'resumeDocument')}
+                                        required
+                                        className="w-full text-black px-4 py-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer text-sm"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 5: Internship Preferences */}
+                        {step === 5 && (
                             <div className="space-y-6 animate-fade-in max-w-4xl mx-auto w-full">
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Interest Track</label>
@@ -342,8 +442,8 @@ export default function RegistrationPage() {
                             </div>
                         )}
 
-                        {/* Step 4: Payment Summary */}
-                        {step === 4 && (
+                        {/* Step 6: Payment Summary */}
+                        {step === 6 && (
                             <div className="space-y-6 animate-fade-in max-w-lg mx-auto w-full">
                                 <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-4">
                                     <h3 className="text-lg font-bold text-black border-b border-gray-200 pb-2">Order Summary</h3>
@@ -406,7 +506,7 @@ export default function RegistrationPage() {
                                 type="submit"
                                 className="col-span-2 bg-black hover:bg-neutral-800 text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
                             >
-                                {step === 4 ? `Pay ₹${prices[formData.duration] || '0'}` : 'Create Account'} <ChevronRight className="w-5 h-5" />
+                                {step === 6 ? `Pay ₹${prices[formData.duration] || '0'}` : 'Create Account'} <ChevronRight className="w-5 h-5" />
                             </button>
                         )}
                     </div>

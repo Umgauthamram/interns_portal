@@ -57,6 +57,17 @@ const UserSchema = new mongoose.Schema({
     profilePicture: {
         type: String,
     },
+    aadhaarNumber: { type: String },
+    passportPhoto: { type: String }, // Storing as base64 or URL
+    aadhaarCard: { type: String },
+    educationQualification: {
+        type: String,
+        enum: ['Pursuing', 'Completed', 'None'],
+    },
+    courseName: { type: String },
+    collegeName: { type: String },
+    workingDetails: { type: String },
+    resumeDocument: { type: String },
     avatarSeed: {
         type: String,
     },

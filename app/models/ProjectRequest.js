@@ -29,9 +29,12 @@ const ProjectRequestSchema = new mongoose.Schema({
         default: 'Pending'
     },
     colorHex: { type: String, default: '#8b5cf6' },
+    category: String,
     techStack: [String],
     repoLink: String,
     deployLink: String,
+    documentFile: String,
+    documentLink: String,
     solution: String,
     progress: { type: Number, default: 0 },
     adminFeedback: String,

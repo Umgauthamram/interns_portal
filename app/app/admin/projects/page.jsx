@@ -19,9 +19,10 @@ import {
     Bell,
     RefreshCw,
     Trash2,
-    Edit3
+    Edit3,
+    X
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,10 +45,90 @@ const TRACK_CONFIG = {
     ]
 };
 
-// Removed INITIAL_AVAILABLE and INITIAL_REQUESTS in favor of backend.
+const TRACK_FORM_FIELDS = {
+    "Web Development": [
+        { name: "title", label: "Project Title", type: "text", required: true },
+        { name: "documentLink", label: "Documentation Link (Notion/Docs)", type: "url", placeholder: "https://docs.google.com/..." },
+        { name: "description", label: "Problem Statement", type: "textarea", rows: 3, required: true },
+        { name: "features", label: "Core Features", type: "textarea", rows: 2 },
+        { name: "techStack", label: "Tech Stack", type: "text", placeholder: "React, Node.js, MongoDB..." },
+        { name: "apis", label: "APIs / Integrations", type: "text", placeholder: "Stripe, OpenAI, Firebase..." },
+        { name: "repoLink", label: "GitHub Repository", type: "url", placeholder: "https://github.com/..." },
+        { name: "demoLink", label: "Live Demo Link", type: "url", placeholder: "https://vercel.app/..." },
+        { name: "documentFile", label: "Documentation File", type: "file" }
+    ],
+    "Blockchain / Web3": [
+        { name: "title", label: "Project Title", type: "text", required: true },
+        { name: "documentLink", label: "Documentation Link (Notion/Docs)", type: "url", placeholder: "https://docs.google.com/..." },
+        { name: "description", label: "Problem Statement", type: "textarea", rows: 3, required: true },
+        { name: "blockchainNetwork", label: "Blockchain Network", type: "text", placeholder: "Ethereum, Polygon, Solana..." },
+        { name: "smartContractLang", label: "Smart Contract Language", type: "text", placeholder: "Solidity, Rust, Vyper..." },
+        { name: "tokenStandard", label: "Token Standard", type: "text", placeholder: "ERC-20, ERC-721, SPL..." },
+        { name: "walletIntegration", label: "Wallet Integration", type: "text", placeholder: "MetaMask, WalletConnect..." },
+        { name: "techStack", label: "Tech Stack", type: "text", placeholder: "Next.js, Hardhat, Ethers.js..." },
+        { name: "storageUsed", label: "IPFS / Storage Used", type: "text", placeholder: "IPFS, Filecoin, Arweave..." },
+        { name: "repoLink", label: "GitHub Repository", type: "url", placeholder: "https://github.com/..." },
+        { name: "demoLink", label: "Demo / Testnet Link", type: "url", placeholder: "https://testnet.example.com/..." },
+        { name: "deploymentNetwork", label: "Deployment Network", type: "dropdown", options: ["Mainnet", "Testnet"] },
+        { name: "documentFile", label: "Documentation File", type: "file" }
+    ],
+    "GenAI": [
+        { name: "title", label: "Project Title", type: "text", required: true },
+        { name: "documentLink", label: "Documentation Link (Notion/Docs)", type: "url", placeholder: "https://docs.google.com/..." },
+        { name: "description", label: "Problem Statement", type: "textarea", rows: 3, required: true },
+        { name: "useCase", label: "Use Case", type: "text", placeholder: "Chatbot, Content Generator, Summarizer..." },
+        { name: "targetUsers", label: "Target Users", type: "text", placeholder: "Students, Developers, Enterprises..." },
+        { name: "modelUsed", label: "Model / API Used", type: "text", placeholder: "GPT-4, Gemini, LLaMA, Claude..." },
+        { name: "dataset", label: "Dataset Source", type: "text", placeholder: "Hugging Face, Kaggle, custom..." },
+        { name: "aiTools", label: "AI Tools / Libraries", type: "text", placeholder: "LangChain, Hugging Face, Pinecone..." },
+        { name: "vectorDatabase", label: "Vector Database", type: "text", placeholder: "Pinecone, ChromaDB, Weaviate..." },
+        { name: "techStack", label: "Tech Stack ", type: "text", placeholder: "FastAPI, Next.js, Python..." },
+        { name: "repoLink", label: "GitHub Repository", type: "url", placeholder: "https://github.com/..." },
+        { name: "demoLink", label: "Demo Link", type: "url", placeholder: "https://..." },
+        { name: "deploymentPlatform", label: "Deployment Platform", type: "text", placeholder: "Vercel, Railway, HuggingFace Spaces..." },
+        { name: "documentFile", label: "Documentation File", type: "file" }
+    ],
+    "AI/ML": [
+        { name: "title", label: "Project Title", type: "text", required: true },
+        { name: "documentLink", label: "Documentation Link (Notion/Docs)", type: "url", placeholder: "https://docs.google.com/..." },
+        { name: "description", label: "Problem Statement", type: "textarea", rows: 3, required: true },
+        { name: "mlTaskType", label: "ML Task Type", type: "text", placeholder: "Classification, NLP, CV, Regression..." },
+        { name: "dataset", label: "Dataset Source", type: "text", placeholder: "Kaggle, UCI, custom dataset..." },
+        { name: "algorithms", label: "Algorithms / Models Used", type: "text", placeholder: "CNN, Transformer, SVM..." },
+        { name: "mlFramework", label: "ML Framework", type: "text", placeholder: "TensorFlow, PyTorch, Scikit-Learn..." },
+        { name: "techStack", label: "Tech Stack", type: "text", placeholder: "Python, FastAPI, Streamlit..." },
+        { name: "trainingEnvironment", label: "Training Environment", type: "text", placeholder: "Local / AWS / GCP / GPU..." },
+        { name: "repoLink", label: "GitHub Repository", type: "url", placeholder: "https://github.com/..." },
+        { name: "demoLink", label: "Demo / Model API Link", type: "url", placeholder: "https://..." },
+        { name: "deploymentPlatform", label: "Deployment Method", type: "text", placeholder: "HuggingFace, FastAPI, Flask..." },
+        { name: "documentFile", label: "Documentation File", type: "file" }
+    ],
+    "App Development": [
+        { name: "title", label: "Project Title", type: "text", required: true },
+        { name: "documentLink", label: "Documentation Link (Notion/Docs)", type: "url", placeholder: "https://docs.google.com/..." },
+        { name: "description", label: "Problem Statement", type: "textarea", rows: 3, required: true },
+        { name: "targetPlatform", label: "Target Platform", type: "dropdown", options: ["Android", "iOS", "Cross-platform"] },
+        { name: "appCategory", label: "App Category", type: "text", placeholder: "E-commerce, HealthTech, FinTech..." },
+        { name: "features", label: "Core Features", type: "textarea", rows: 2, placeholder: "Auth, Push Notifs, Offline Mode..." },
+        { name: "techStack", label: "Tech Stack / Framework ", type: "text", placeholder: "Flutter, React Native, Firebase..." },
+        { name: "apis", label: "APIs / Integrations", type: "text", placeholder: "Maps API, Stripe, FCM..." },
+        { name: "repoLink", label: "GitHub Repository", type: "url", placeholder: "https://github.com/..." },
+        { name: "demoLink", label: "APK / TestFlight / Demo Link", type: "url", placeholder: "https://..." },
+        { name: "deploymentPlatform", label: "Deployment Platform", type: "text", placeholder: "Play Store, App Store, Expo..." },
+        { name: "documentFile", label: "Documentation File", type: "file" }
+    ],
+    "RESEARCH": [
+        { name: "title", label: "Research Title", type: "text", required: true },
+        { name: "documentLink", label: "Research Document Link (Notion/Docs)", type: "url", placeholder: "https://docs.google.com/..." },
+        { name: "description", label: "Problem Statement", type: "textarea", rows: 3, required: true },
+        { name: "referenceLink", label: "Reference Links (comma-separated URLs)", type: "urlArray", placeholder: "https://paper1.com, https://paper2.com..." },
+        { name: "documentFile", label: "Research Document File", type: "file" }
+    ]
+};
+
 
 export default function AdminProjectsPage() {
-    const [activeTab, setActiveTab] = useState('requests'); // default to requests
+    const [activeTab, setActiveTab] = useState('available'); // default to projects pool
     const [available, setAvailable] = useState([]);
     const [requests, setRequests] = useState([]);
     const [presetRequests, setPresetRequests] = useState([]);
@@ -62,18 +143,30 @@ export default function AdminProjectsPage() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [newTrackName, setNewTrackName] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("CODING");
+    const [selectedTrackName, setSelectedTrackName] = useState("Web Development");
     const [newTrackCategory, setNewTrackCategory] = useState("CODING");
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [deleteTrackTarget, setDeleteTrackTarget] = useState(null); // { category, index, track }
     const [openTrackMenuIdx, setOpenTrackMenuIdx] = useState(null); // "CODING-0" etc.
+    const [selectedFileName, setSelectedFileName] = useState(null); // for file picker display
+    const [formStep, setFormStep] = useState(1); // 1 = classification, 2 = specifications
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchOpen, setSearchOpen] = useState(false);
+    const searchInputRef = useRef(null);
 
     const fetchAll = async () => {
         setIsRefreshing(true);
         try {
-            const [reqRes, poolRes] = await Promise.all([
+            const [reqRes, poolRes, tracksRes] = await Promise.all([
                 fetch('/api/projects?role=admin'),
-                fetch('/api/admin/projects/pool')
+                fetch('/api/admin/projects/pool'),
+                fetch('/api/admin/tracks')
             ]);
+
+            if (tracksRes.ok) {
+                const tracksData = await tracksRes.json();
+                setTracks(tracksData);
+            }
 
             let poolData = [];
             if (poolRes.ok) {
@@ -155,7 +248,7 @@ export default function AdminProjectsPage() {
                         onClick={() => setActiveTab('available')}
                         className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'available' ? 'bg-white shadow-sm text-black border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
                     >
-                        Pool
+                        Projects
                     </button>
                     <button
                         onClick={() => setActiveTab('requests')}
@@ -174,12 +267,6 @@ export default function AdminProjectsPage() {
                     >
                         Preset Requests
                     </button>
-                    <button
-                        onClick={() => setActiveTab('tracks')}
-                        className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'tracks' ? 'bg-white shadow-sm text-black border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                        Tracks
-                    </button>
                 </div>
             </div>
 
@@ -194,10 +281,36 @@ export default function AdminProjectsPage() {
                     >
                         <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden">
                             <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-                                <div className="relative w-full md:w-80">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
-                                    <input placeholder="Search asset pool..." className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl text-[11px] font-bold focus:ring-4 focus:ring-black/5 outline-none" />
-                                </div>
+                                {/* Expandable Search Bar */}
+                                <motion.div
+                                    className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl overflow-hidden"
+                                    animate={{ width: searchOpen ? 280 : 40 }}
+                                    transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                                    style={{ minWidth: 40 }}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearchOpen(o => !o);
+                                            if (!searchOpen) setTimeout(() => searchInputRef.current?.focus(), 150);
+                                            else setSearchQuery('');
+                                        }}
+                                        className="shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
+                                    >
+                                        {searchOpen
+                                            ? <X className="w-3.5 h-3.5" />
+                                            : <Search className="w-3.5 h-3.5" />}
+                                    </button>
+                                    {searchOpen && (
+                                        <input
+                                            ref={searchInputRef}
+                                            value={searchQuery}
+                                            onChange={e => setSearchQuery(e.target.value)}
+                                            placeholder="Search project or track..."
+                                            className="flex-1 bg-transparent pr-3 text-[11px] font-bold outline-none placeholder:text-gray-300 text-gray-800"
+                                        />
+                                    )}
+                                </motion.div>
                                 <button
                                     onClick={() => setIsAddModalOpen(true)}
                                     className="w-full md:w-auto px-6 py-3 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-lg shadow-black/10"
@@ -219,43 +332,52 @@ export default function AdminProjectsPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
-                                        {available.map(item => (
-                                            <tr
-                                                key={item._id || item.id}
-                                                onClick={() => {
-                                                    setEditingProject(item);
-                                                    setIsEditModalOpen(true);
-                                                }}
-                                                className="hover:bg-gray-50/30 transition-all group border-b border-gray-50 last:border-0 cursor-pointer"
-                                            >
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-3.5">
-                                                        <div className="p-2.5 bg-gray-50 rounded-lg group-hover:bg-white group-hover:shadow-sm border border-transparent group-hover:border-gray-100 transition-all">
-                                                            <Briefcase className="w-4 h-4 text-gray-900" />
+                                        {available
+                                            .filter(item => {
+                                                if (!searchQuery.trim()) return true;
+                                                const q = searchQuery.toLowerCase();
+                                                return (
+                                                    (item.title || '').toLowerCase().includes(q) ||
+                                                    (item.track || '').toLowerCase().includes(q)
+                                                );
+                                            })
+                                            .map(item => (
+                                                <tr
+                                                    key={item._id || item.id}
+                                                    onClick={() => {
+                                                        setEditingProject(item);
+                                                        setIsEditModalOpen(true);
+                                                    }}
+                                                    className="hover:bg-gray-50/30 transition-all group border-b border-gray-50 last:border-0 cursor-pointer"
+                                                >
+                                                    <td className="px-8 py-5">
+                                                        <div className="flex items-center gap-3.5">
+                                                            <div className="p-2.5 bg-gray-50 rounded-lg group-hover:bg-white group-hover:shadow-sm border border-transparent group-hover:border-gray-100 transition-all">
+                                                                <Briefcase className="w-4 h-4 text-gray-900" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[12px] font-black text-gray-900 uppercase tracking-tight">{item.title}</p>
+                                                                <p className="text-[8px] text-gray-300 font-black uppercase mt-0.5">TTL: {item.deadline}</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-[12px] font-black text-gray-900 uppercase tracking-tight">{item.title}</p>
-                                                            <p className="text-[8px] text-gray-300 font-black uppercase mt-0.5">TTL: {item.deadline}</p>
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <span className="px-3 py-1 bg-gray-50 text-[8px] font-black uppercase rounded-full border border-gray-100 text-gray-500">{item.track}</span>
+                                                    </td>
+                                                    <td className="px-4 py-5 font-black text-[11px] text-gray-800">
+                                                        {item.enrolled}
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                                                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Active</span>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-5">
-                                                    <span className="px-3 py-1 bg-gray-50 text-[8px] font-black uppercase rounded-full border border-gray-100 text-gray-500">{item.track}</span>
-                                                </td>
-                                                <td className="px-4 py-5 font-black text-[11px] text-gray-800">
-                                                    {item.enrolled}
-                                                </td>
-                                                <td className="px-4 py-5">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
-                                                        <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Active</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5 text-right">
-                                                    <button className="p-2 hover:bg-white hover:shadow-md rounded-lg transition-all border border-transparent hover:border-gray-50"><MoreHorizontal className="w-4 h-4 text-gray-300" /></button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                    </td>
+                                                    <td className="px-8 py-5 text-right">
+                                                        <button className="p-2 hover:bg-white hover:shadow-md rounded-lg transition-all border border-transparent hover:border-gray-50"><MoreHorizontal className="w-4 h-4 text-gray-300" /></button>
+                                                    </td>
+                                                </tr>
+                                            ))}
                                     </tbody>
                                 </table>
                             </div>
@@ -380,123 +502,7 @@ export default function AdminProjectsPage() {
                             </div>
                         ))}
                     </motion.div>
-                ) : (
-                    <motion.div
-                        key="tracks"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="space-y-6"
-                    >
-                        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl shadow-gray-200/20">
-                            <div className="flex justify-between items-center mb-10">
-                                <div>
-                                    <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Academic Tracks</h3>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Define learning pathways for interns</p>
-                                </div>
-                                <button
-                                    onClick={() => setIsAddTrackModalOpen(true)}
-                                    className="px-6 py-3 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] transition-all shadow-lg"
-                                >
-                                    <Plus className="w-4 h-4" /> Add New Track
-                                </button>
-                            </div>
-
-                            <div className="space-y-12">
-                                {Object.entries(tracks).map(([category, trackList]) => (
-                                    <div key={category} className="space-y-4">
-                                        <div className="flex items-center gap-3 ml-2">
-                                            <div className={`w-2 h-2 rounded-full ${category === 'CODING' ? 'bg-black' : 'bg-rose-500'}`} />
-                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{category === 'CODING' ? 'Scientific Programming' : 'Research & Innovations'}</h4>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {trackList.map((track, i) => {
-                                                const menuKey = `${category}-${i}`;
-                                                return (
-                                                    <div
-                                                        key={track.name || i}
-                                                        className="group p-6 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex flex-col gap-3 hover:bg-white hover:shadow-xl hover:shadow-gray-200/30 transition-all relative overflow-visible"
-                                                    >
-                                                        <div className="flex items-center justify-between">
-                                                            <div
-                                                                className="p-3 bg-white rounded-xl shadow-sm border border-gray-50 group-hover:scale-110 transition-transform cursor-pointer"
-                                                                onClick={() => {
-                                                                    setEditingTrack({ category, index: i, track });
-                                                                    setIsTrackEditModalOpen(true);
-                                                                    setOpenTrackMenuIdx(null);
-                                                                }}
-                                                            >
-                                                                {category === 'CODING' ? <Briefcase className="w-5 h-5 text-black" /> : <Zap className="w-5 h-5 text-rose-500" />}
-                                                            </div>
-
-                                                            {/* ••• Menu */}
-                                                            <div className="relative">
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setOpenTrackMenuIdx(prev => prev === menuKey ? null : menuKey);
-                                                                    }}
-                                                                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-300 hover:text-gray-700"
-                                                                >
-                                                                    <MoreHorizontal className="w-4 h-4" />
-                                                                </button>
-
-                                                                {openTrackMenuIdx === menuKey && (
-                                                                    <div
-                                                                        className="absolute right-0 top-8 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden min-w-[130px]"
-                                                                        onClick={e => e.stopPropagation()}
-                                                                    >
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setEditingTrack({ category, index: i, track });
-                                                                                setIsTrackEditModalOpen(true);
-                                                                                setOpenTrackMenuIdx(null);
-                                                                            }}
-                                                                            className="w-full flex items-center gap-2.5 px-4 py-3 text-[10px] font-black text-gray-700 uppercase tracking-widest hover:bg-gray-50 transition-colors"
-                                                                        >
-                                                                            <Edit3 className="w-3.5 h-3.5" /> Edit Track
-                                                                        </button>
-                                                                        <div className="h-px bg-gray-50" />
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setDeleteTrackTarget({ category, index: i, track });
-                                                                                setOpenTrackMenuIdx(null);
-                                                                            }}
-                                                                            className="w-full flex items-center gap-2.5 px-4 py-3 text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 transition-colors"
-                                                                        >
-                                                                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div
-                                                            className="cursor-pointer"
-                                                            onClick={() => {
-                                                                setEditingTrack({ category, index: i, track });
-                                                                setIsTrackEditModalOpen(true);
-                                                            }}
-                                                        >
-                                                            <h5 className="text-[12px] font-black text-gray-900 uppercase tracking-tight">{track.name}</h5>
-                                                            <p className="text-[9px] text-gray-400 font-bold leading-relaxed mt-1 line-clamp-2">
-                                                                {track.description || "No description provided for this protocol."}
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 mt-1">
-                                                            <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                                                            <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Active Node</span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
+                ) : null}
             </AnimatePresence>
 
             {/* Add Project Modal */}
@@ -505,44 +511,59 @@ export default function AdminProjectsPage() {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAddModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-2xl" />
                         <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="relative bg-white rounded-[2.5rem] p-8 max-w-2xl w-full shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-start mb-6">
                                 <div>
                                     <p className="text-[8px] font-black text-gray-300 uppercase tracking-[0.4em] mb-1">Asset Integration</p>
                                     <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">New Base Project</h3>
+                                    {/* Step indicator */}
+                                    <div className="flex items-center gap-2 mt-3">
+                                        <div className={`flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest ${formStep === 1 ? 'text-black' : 'text-gray-300'}`}>
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black transition-all ${formStep === 1 ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'}`}>1</div>
+                                            Classification
+                                        </div>
+                                        <div className={`w-6 h-px ${formStep === 2 ? 'bg-black' : 'bg-gray-200'} transition-colors`} />
+                                        <div className={`flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest ${formStep === 2 ? 'text-black' : 'text-gray-300'}`}>
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black transition-all ${formStep === 2 ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'}`}>2</div>
+                                            Specifications
+                                        </div>
+                                    </div>
                                 </div>
-                                <button onClick={() => setIsAddModalOpen(false)} className="p-2 bg-gray-50 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all border border-gray-100"><XCircle className="w-5 h-5" /></button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsAddModalOpen(false); setFormStep(1); setSelectedFileName(null); }}
+                                    className="p-2.5 bg-gray-100 hover:bg-rose-50 hover:text-rose-500 rounded-xl transition-all border border-gray-200 shrink-0"
+                                >
+                                    <XCircle className="w-5 h-5" />
+                                </button>
                             </div>
 
-                            <form className="space-y-8 overflow-y-auto pr-4 custom-scrollbar" onSubmit={async (e) => {
+                            <form className="space-y-6 overflow-y-auto pr-4 custom-scrollbar" onSubmit={async (e) => {
                                 e.preventDefault();
+                                if (formStep === 1) { setFormStep(2); return; }
                                 const formData = new FormData(e.target);
+
+                                const baseFields = ['title', 'description', 'repoLink', 'demoLink', 'timeline', 'documentFile', 'documentLink', 'deadline'];
                                 const newProject = {
                                     category: selectedCategory,
-                                    title: formData.get('title'),
-                                    track: formData.get('track'),
+                                    track: selectedTrackName,
                                     difficulty: formData.get('difficulty'),
-                                    type: formData.get('type'),
-                                    description: formData.get('description'),
-                                    realWorld: formData.get('realWorld'),
-                                    matters: formData.get('matters'),
-                                    existingSolutions: formData.get('existingSolutions'),
-                                    objectives: formData.get('objectives'),
-                                    features: formData.get('features'),
-                                    techStack: formData.get('techStack'),
-                                    apis: formData.get('apis'),
-                                    dataset: formData.get('dataset'),
-                                    researchBackground: formData.get('researchBackground'),
-                                    hypothesis: formData.get('hypothesis'),
-                                    innovation: formData.get('innovation'),
-                                    relevance: formData.get('relevance'),
-                                    researchOutput: formData.get('researchOutput'),
-                                    startDate: formData.get('startDate'),
-                                    endDate: formData.get('endDate'),
-                                    milestones: formData.get('milestones'),
+                                    type: formData.get('type') || "Coding Project",
                                     status: "Active",
                                     deadline: formData.get('deadline') || "1 Month",
-                                    enrolled: 0
+                                    enrolled: 0,
+                                    dynamicFields: {}
                                 };
+
+                                // Iterate and assign mapping
+                                for (let [key, value] of formData.entries()) {
+                                    if (['difficulty', 'type', 'track', 'category', 'deadline'].includes(key)) continue;
+
+                                    if (baseFields.includes(key)) {
+                                        newProject[key] = value;
+                                    } else {
+                                        newProject.dynamicFields[key] = value;
+                                    }
+                                }
 
                                 try {
                                     const res = await fetch('/api/admin/projects/pool', {
@@ -563,45 +584,57 @@ export default function AdminProjectsPage() {
                                     toast.error("Internal Error");
                                 }
                             }}>
-                                {/* Phase 1: Classification */}
-                                <div className="space-y-4">
-                                    <h4 className="text-[9px] font-black text-black uppercase tracking-widest border-l-4 border-black pl-3">Phase I: Classification</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
+                                {/* ── STEP 1: Classification ── */}
+                                {formStep === 1 && (
+                                    <div className="space-y-6">
+                                        {/* Two-panel category picker */}
+                                        <div className="space-y-3">
                                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Asset Category</label>
-                                            <select
-                                                value={selectedCategory}
-                                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none"
-                                            >
-                                                <option value="CODING">Coding Project</option>
-                                                <option value="RESEARCH">Research & Development</option>
-                                            </select>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button type="button" onClick={() => { setSelectedCategory("CODING"); setSelectedTrackName(tracks["CODING"]?.[0]?.name || ""); }} className={`relative p-4 rounded-2xl border-2 text-left transition-all ${selectedCategory === "CODING" ? "border-black bg-black text-white shadow-xl scale-[1.01]" : "border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-300"}`}>
+                                                    <div className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-60">Category</div>
+                                                    <div className="text-[15px] font-black uppercase tracking-tight leading-none">💻 Coding</div>
+                                                    <div className={`text-[9px] font-semibold mt-1.5 ${selectedCategory === "CODING" ? "text-gray-300" : "text-gray-400"}`}>Web, AI, Blockchain, App</div>
+                                                </button>
+                                                <button type="button" onClick={() => { setSelectedCategory("RESEARCH"); setSelectedTrackName(tracks["RESEARCH"]?.[0]?.name || ""); }} className={`relative p-4 rounded-2xl border-2 text-left transition-all ${selectedCategory === "RESEARCH" ? "border-black bg-black text-white shadow-xl scale-[1.01]" : "border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-300"}`}>
+                                                    <div className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-60">Category</div>
+                                                    <div className="text-[15px] font-black uppercase tracking-tight leading-none">🔬 Research</div>
+                                                    <div className={`text-[9px] font-semibold mt-1.5 ${selectedCategory === "RESEARCH" ? "text-gray-300" : "text-gray-400"}`}>Science, Quantum, Bio, Energy</div>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Specific Track</label>
-                                            <select name="track" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none">
-                                                {tracks[selectedCategory].map((t, i) => (
-                                                    <option key={t.name || i} value={t.name}>{t.name}</option>
+
+                                        {/* Track chip selector */}
+                                        <div className="space-y-2">
+                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                                Specific Track — <span className={selectedCategory === "CODING" ? "text-black" : "text-indigo-500"}>{selectedCategory}</span>
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(tracks[selectedCategory] || []).map((t, i) => (
+                                                    <button key={t.name || i} type="button" onClick={() => setSelectedTrackName(t.name)} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${selectedTrackName === t.name ? "bg-black text-white border-black shadow-md" : "bg-white text-gray-500 border-gray-200 hover:border-black/30 hover:text-black"}`}>
+                                                        {t.name}
+                                                    </button>
                                                 ))}
-                                            </select>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Problem Descriptor</label>
-                                            <input name="title" required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" placeholder="E.g. Neural Link Interface..." />
+
+                                        {/* Difficulty + Duration */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Difficulty Matrix</label>
+                                                <select name="difficulty" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none">
+                                                    <option>Beginner</option>
+                                                    <option>Intermediate</option>
+                                                    <option>Advanced</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">TTL / Duration</label>
+                                                <input name="deadline" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" placeholder="1 Month" />
+                                            </div>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Difficulty Matrix</label>
-                                            <select name="difficulty" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none">
-                                                <option>Beginner</option>
-                                                <option>Intermediate</option>
-                                                <option>Advanced</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
+
+                                        {/* Asset Type */}
                                         <div className="space-y-1.5">
                                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Asset Type</label>
                                             <select name="type" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none">
@@ -611,132 +644,75 @@ export default function AdminProjectsPage() {
                                                 <option>Hybrid (Coding + Research)</option>
                                             </select>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">TTL / Duration</label>
-                                            <input name="deadline" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" placeholder="1 Month" />
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {/* Phase 2: Narrative */}
-                                <div className="space-y-4 pt-4">
-                                    <h4 className="text-[9px] font-black text-black uppercase tracking-widest border-l-4 border-black pl-3">Phase II: Context & Narrative</h4>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Scope Description</label>
-                                        <textarea name="description" rows="3" required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder="Core problem statement..." />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Real-world Scenario</label>
-                                            <textarea name="realWorld" rows="2" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder="Scenario explanation..." />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Industry Impact</label>
-                                            <textarea name="matters" rows="2" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder="Why this matters..." />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Existing Solutions</label>
-                                        <input name="existingSolutions" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" placeholder="Any currently existing implementations..." />
-                                    </div>
-                                </div>
-
-                                {/* Phase 3: Requirements */}
-                                <div className="space-y-4 pt-4">
-                                    <h4 className="text-[9px] font-black text-black uppercase tracking-widest border-l-4 border-black pl-3">Phase III: Strategic Alignment</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Build Objectives</label>
-                                            <textarea name="objectives" rows="2" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder="What should be built?" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Expected Features</label>
-                                            <textarea name="features" rows="2" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder="Key feature list..." />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Stack (CSV)</label>
-                                            <input name="techStack" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-bold outline-none" placeholder="React, Node..." />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Required APIs</label>
-                                            <input name="apis" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-bold outline-none" placeholder="OpenAI, Stripe..." />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Dataset URL</label>
-                                            <input name="dataset" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-bold outline-none" placeholder="Kaggle/S3 link..." />
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Phase 4: Research Specific (Conditional) */}
-                                {selectedCategory === "RESEARCH" && (
-                                    <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <h4 className="text-[9px] font-black text-rose-500 uppercase tracking-widest border-l-4 border-rose-500 pl-3">Phase IV: Research Intelligence</h4>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Research Background</label>
-                                            <textarea name="researchBackground" rows="3" className="w-full bg-rose-50/30 border border-rose-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-rose-500/5 outline-none resize-none" placeholder="Existing research summary & gaps..." />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Scientific Hypothesis</label>
-                                                <textarea name="hypothesis" rows="2" className="w-full bg-rose-50/30 border border-rose-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-rose-500/5 outline-none resize-none" placeholder="What hypothesis should they test?" />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Expected Innovation</label>
-                                                <textarea name="innovation" rows="2" className="w-full bg-rose-50/30 border border-rose-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-rose-500/5 outline-none resize-none" placeholder="What innovation is expected?" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Industry Relevance</label>
-                                                <input name="relevance" className="w-full bg-rose-50/30 border border-rose-100 rounded-xl px-4 py-3 text-[12px] font-bold outline-none" placeholder="How does this help industry?" />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Target Output</label>
-                                                <select name="researchOutput" className="w-full bg-rose-50/30 border border-rose-100 rounded-xl px-4 py-3 text-[12px] font-bold outline-none">
-                                                    <option>Research Paper (PDF)</option>
-                                                    <option>Functional Prototype</option>
-                                                    <option>Simulation Dataset</option>
-                                                    <option>Experimental Analysis</option>
-                                                </select>
-                                            </div>
+                                        <div className="pt-2">
+                                            <button type="submit" className="w-full py-4 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-3">
+                                                Continue to Specifications <ArrowRight className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Phase 5: Timeline */}
-                                <div className="space-y-4 pt-4">
-                                    <h4 className="text-[9px] font-black text-emerald-500 uppercase tracking-widest border-l-4 border-emerald-500 pl-3">Phase V: Execution Timeline</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Protocol Start</label>
-                                            <input name="startDate" type="date" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" />
+                                {/* ── STEP 2: Specifications ── */}
+                                {formStep === 2 && (
+                                    <div className="space-y-4">
+                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest border-l-4 border-black pl-3">
+                                            {selectedCategory === "RESEARCH" ? "Research Specifications" : `${selectedTrackName} Specifications`}
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            {(TRACK_FORM_FIELDS[selectedCategory === "RESEARCH" ? "RESEARCH" : selectedTrackName] || TRACK_FORM_FIELDS["Web Development"]).map((field, idx) => {
+                                                const isWide = field.type === 'textarea' || field.type === 'file' || field.type === 'urlArray';
+                                                return (
+                                                    <div key={idx} className={`space-y-1.5 ${isWide ? 'col-span-1 md:col-span-2' : ''}`}>
+                                                        <label className="flex items-center gap-1.5 text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                                            {field.label}
+                                                            {(field.type === 'csv') && (<span className="px-1.5 py-0.5 bg-blue-50 text-blue-500 rounded text-[7px] font-black normal-case tracking-normal">CSV</span>)}
+                                                            {(field.type === 'url' || field.type === 'urlArray') && (<span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded text-[7px] font-black normal-case tracking-normal">URL</span>)}
+                                                        </label>
+                                                        {field.type === 'textarea' ? (
+                                                            <textarea name={field.name} rows={field.rows || 2} required={field.required} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder={field.placeholder || "..."} />
+                                                        ) : field.type === 'file' ? (
+                                                            <label className="group flex flex-col items-center justify-center gap-2 w-full h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-black hover:bg-gray-100 transition-all">
+                                                                <input type="file" name={field.name} accept=".pdf,.doc,.docx,.ppt,.pptx" className="hidden" onChange={(e) => setSelectedFileName(e.target.files?.[0]?.name || null)} />
+                                                                {selectedFileName ? (
+                                                                    <><svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span className="text-[10px] font-black text-black tracking-widest text-center px-4 truncate max-w-full">{selectedFileName}</span><span className="text-[8px] text-gray-400">Click to change</span></>
+                                                                ) : (
+                                                                    <><svg className="w-6 h-6 text-gray-400 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg><span className="text-[9px] font-black text-gray-400 group-hover:text-black uppercase tracking-widest transition-colors">Click to select file</span><span className="text-[8px] text-gray-300">PDF, DOC, DOCX, PPT supported</span></>
+                                                                )}
+                                                            </label>
+                                                        ) : field.type === 'dropdown' ? (
+                                                            <select name={field.name} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none">
+                                                                {(field.options || []).map(opt => (<option key={opt} value={opt}>{opt}</option>))}
+                                                            </select>
+                                                        ) : field.type === 'urlArray' ? (
+                                                            <textarea name={field.name} rows={2} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder={field.placeholder || "https://ref1.com, https://ref2.com..."} />
+                                                        ) : (
+                                                            <input name={field.name} type={field.type === 'url' ? 'url' : 'text'} required={field.required} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" placeholder={field.placeholder || "..."} />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Protocol End</label>
-                                            <input name="endDate" type="date" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Key Milestones (CSV)</label>
-                                        <textarea name="milestones" rows="2" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder="E.g. Alpha Launch, Beta Test, Paper Submission..." />
-                                    </div>
-                                </div>
 
-                                <div className="pt-6 pb-2">
-                                    <button type="submit" className="w-full py-4 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.01] transition-all border border-black group flex items-center justify-center gap-3">
-                                        Initialize Protocol Deployment <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                </div>
+                                        <div className="flex gap-3 pt-2">
+                                            <button type="button" onClick={() => setFormStep(1)} className="flex-1 py-4 bg-gray-100 text-gray-700 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
+                                                ← Back
+                                            </button>
+                                            <button type="submit" className="flex-[2] py-4 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-3">
+                                                Initialize Protocol Deployment <ArrowRight className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </form>
                         </motion.div>
                     </div>
-                )}
-            </AnimatePresence>
+                )
+                }
+            </AnimatePresence >
 
             {/* Edit Project Modal */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {isEditModalOpen && editingProject && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsEditModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-2xl" />
@@ -866,7 +842,7 @@ export default function AdminProjectsPage() {
                                     </div>
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Stack (CSV)</label>
+                                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Stack </label>
                                             <input name="techStack" defaultValue={editingProject.techStack} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-bold outline-none" />
                                         </div>
                                         <div className="space-y-1.5">
@@ -930,7 +906,7 @@ export default function AdminProjectsPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Key Milestones (CSV)</label>
+                                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Key Milestones </label>
                                         <textarea name="milestones" defaultValue={editingProject.milestones} rows="2" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" />
                                     </div>
                                 </div>
@@ -944,10 +920,10 @@ export default function AdminProjectsPage() {
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
 
             {/* Proposal Details Modal */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {isDetailsModalOpen && selectedRequest && (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDetailsModalOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-md" />
@@ -1059,156 +1035,8 @@ export default function AdminProjectsPage() {
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
 
-            {/* Track Edit Modal */}
-            <AnimatePresence>
-                {isTrackEditModalOpen && editingTrack && (
-                    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsTrackEditModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-2xl" />
-                        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="relative bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl border border-gray-100">
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <p className="text-[8px] font-black text-gray-300 uppercase tracking-[0.4em] mb-1">{editingTrack.category} Protocol</p>
-                                    <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">Edit Track Details</h3>
-                                </div>
-                                <button onClick={() => setIsTrackEditModalOpen(false)} className="p-2 bg-gray-50 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all border border-gray-100"><XCircle className="w-5 h-5" /></button>
-                            </div>
-
-                            <form className="space-y-6" onSubmit={(e) => {
-                                e.preventDefault();
-                                const formData = new FormData(e.target);
-                                setTracks(prev => {
-                                    const updated = { ...prev };
-                                    updated[editingTrack.category][editingTrack.index] = {
-                                        name: formData.get('name'),
-                                        description: formData.get('description')
-                                    };
-                                    return updated;
-                                });
-                                toast.success("Track Configuration Updated");
-                                setIsTrackEditModalOpen(false);
-                            }}>
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Track Identifier</label>
-                                    <input name="name" defaultValue={editingTrack.track.name} required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none" placeholder="E.g. Web Development..." />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Protocol Description</label>
-                                    <textarea name="description" defaultValue={editingTrack.track.description} rows="4" required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none resize-none" placeholder="Detail the learning outcomes and technical focus area..." />
-                                </div>
-                                <button type="submit" className="w-full py-4 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.01] transition-all border border-black flex items-center justify-center gap-2 group">
-                                    Sync Protocol Changes <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                                </button>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* ── Delete Track Confirmation Modal ── */}
-            <AnimatePresence>
-                {deleteTrackTarget && (
-                    <div className="fixed inset-0 z-[140] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            onClick={() => setDeleteTrackTarget(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-2xl" />
-                        <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                            className="relative bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border border-gray-100">
-
-                            {/* Red icon */}
-                            <div className="w-14 h-14 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center mb-5">
-                                <Trash2 className="w-6 h-6 text-red-500" />
-                            </div>
-
-                            <h3 className="text-lg font-black text-gray-900 uppercase tracking-tighter mb-1">Delete Track?</h3>
-                            <p className="text-sm text-gray-500 font-medium mb-1">
-                                You are about to delete the track:
-                            </p>
-                            <p className="text-sm font-black text-gray-900 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 mb-5">
-                                {deleteTrackTarget.track.name}
-                            </p>
-                            <p className="text-xs text-gray-400 font-medium mb-6">
-                                This will remove the track from the list. Existing intern assignments will not be affected.
-                            </p>
-
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setDeleteTrackTarget(null)}
-                                    className="flex-1 py-3 bg-gray-50 text-gray-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-100"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const { category, index } = deleteTrackTarget;
-                                        setTracks(prev => ({
-                                            ...prev,
-                                            [category]: prev[category].filter((_, i) => i !== index)
-                                        }));
-                                        toast.success(`Track "${deleteTrackTarget.track.name}" removed.`);
-                                        setDeleteTrackTarget(null);
-                                    }}
-                                    className="flex-[2] py-3 bg-red-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2"
-                                >
-                                    <Trash2 className="w-4 h-4" /> Yes, Delete
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Add Track Modal */}
-            <AnimatePresence>
-                {isAddTrackModalOpen && (
-                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAddTrackModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-2xl" />
-                        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="relative bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border border-gray-100">
-                            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter mb-6">Create New Track</h3>
-                            <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Track Category</label>
-                                    <select
-                                        value={newTrackCategory}
-                                        onChange={(e) => setNewTrackCategory(e.target.value)}
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none"
-                                    >
-                                        <option value="CODING">Coding (Scientific/Dev)</option>
-                                        <option value="RESEARCH">Research & Development</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Track Name</label>
-                                    <input
-                                        autoFocus
-                                        value={newTrackName}
-                                        onChange={(e) => setNewTrackName(e.target.value)}
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[12px] font-bold focus:ring-4 focus:ring-black/5 outline-none"
-                                        placeholder="E.g. Cyber Security..."
-                                    />
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        if (newTrackName.trim()) {
-                                            setTracks(prev => ({
-                                                ...prev,
-                                                [newTrackCategory]: [...prev[newTrackCategory], { name: newTrackName.trim(), description: "" }]
-                                            }));
-                                            setNewTrackName("");
-                                            setIsAddTrackModalOpen(false);
-                                            toast.success(`Track "${newTrackName}" initialized in ${newTrackCategory}.`);
-                                        }
-                                    }}
-                                    className="w-full py-3 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.01] transition-all"
-                                >
-                                    Confirm Initialization
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
@@ -1225,6 +1053,6 @@ export default function AdminProjectsPage() {
                     background: #cbd5e1;
                 }
             `}</style>
-        </div>
+        </div >
     );
 }
