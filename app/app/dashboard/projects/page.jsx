@@ -40,7 +40,7 @@ const submissionColors = [
 
 const TRACK_TECH_STACKS = {
     "Web Development": ["Next.js", "React", "Node.js", "Playwright", "Tailwind CSS", "MongoDB", "PostgreSQL", "Firebase"],
-    "App Development (NextJS, Flutter)": ["Flutter", "React Native", "Swift", "Kotlin", "Firebase", "SQLite", "Node.js"],
+    "App Development (React Native, Flutter)": ["Flutter", "React Native", "Swift", "Kotlin", "Firebase", "SQLite", "Node.js"],
     "Blockchain/Web3": ["Solidity", "Hardhat", "Truffle", "Ethers.js", "Web3.js", "IPFS", "Next.js"],
     "Gen AI": ["LangChain", "OpenAI API", "Hugging Face", "Pinecone", "ChromaDB", "FastAPI", "Python"],
     "AI/ML": ["Python", "TensorFlow", "PyTorch", "Scikit-Learn", "Pandas", "NumPy", "Jupyter"],

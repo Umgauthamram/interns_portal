@@ -142,7 +142,8 @@ export default function AdminSchedulePage() {
                 }].sort((a, b) => new Date(a.date) - new Date(b.date)));
                 setSelectedUser(""); setDate(""); setTime(""); setMeetingLink(""); setDescription("");
             } else {
-                toast.error("Schedule Dispatch Failed.");
+                const errorData = await res.json();
+                toast.error(errorData.message || "Schedule Dispatch Failed.");
             }
         } catch (error) {
             toast.error("System Error during transmission.");
@@ -218,28 +219,34 @@ export default function AdminSchedulePage() {
     const calendarData = Object.values(
         [
             // Regular one-off meetings
-            ...schedules.map(s => ({
-                _id: s._id,
-                dateStr: new Date(s.date).toISOString().split('T')[0],
-                dateObj: new Date(s.date),
-                event: {
-                    id: s._id,
-                    name: s.userId?.fullName || 'Intern',
-                    description: s.description || 'Meeting',
-                    time: s.time,
-                    datetime: `${new Date(s.date).toISOString().split('T')[0]}T${s.time}`,
-                    meetingLink: s.meetingLink,
-                    tag: 'meeting',
-                },
-            })),
+            ...schedules.map(s => {
+                const d = new Date(s.date);
+                const localDate = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+                const dateStr = d.toISOString().split('T')[0];
+                return {
+                    _id: s._id,
+                    dateStr,
+                    dateObj: localDate,
+                    event: {
+                        id: s._id,
+                        name: s.userId?.fullName || 'Intern',
+                        description: s.description || 'Meeting',
+                        time: s.time,
+                        datetime: `${dateStr}T${s.time}`,
+                        meetingLink: s.meetingLink,
+                        tag: 'meeting',
+                    },
+                };
+            }),
             // Weekly review sessions
             ...reviews.map(r => {
-                const dateObj = new Date(r.scheduledDate);
-                const dateStr = dateObj.toISOString().split('T')[0];
+                const d = new Date(r.scheduledDate);
+                const localDate = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+                const dateStr = d.toISOString().split('T')[0];
                 return {
                     _id: r._id,
                     dateStr,
-                    dateObj,
+                    dateObj: localDate,
                     event: {
                         id: r._id,
                         name: r.internName || 'Intern',
@@ -383,10 +390,11 @@ export default function AdminSchedulePage() {
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-2">Time</label>
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-2">Time (09:00 - 20:00)</label>
                                                 <div className="relative">
                                                     <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                                                     <input type="time" value={time} onChange={e => setTime(e.target.value)} required
+                                                        min="09:00" max="20:00"
                                                         className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-12 pr-4 py-3 text-sm font-bold focus:ring-4 focus:ring-black/5 outline-none" />
                                                 </div>
                                             </div>

@@ -10,6 +10,11 @@ export async function POST(req) {
         const body = await req.json();
         const { userId, adminEmail, date, time, meetingLink, description } = body;
 
+        // 9am to 8pm validation
+        if (time < "09:00" || time > "20:00") {
+            return NextResponse.json({ message: "Meetings must be scheduled between 09:00 and 20:00." }, { status: 400 });
+        }
+
         // Fetch intern details
         const intern = await User.findById(userId);
         if (!intern) {

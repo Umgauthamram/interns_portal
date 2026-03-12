@@ -3,7 +3,7 @@
 import {
     Activity, BarChart2, Users, UserCheck, TrendingUp,
     FolderKanban, CheckCircle2, Clock, ArrowUpRight,
-    Zap, Award, Calendar, ChevronRight
+    Zap, Award, Calendar, ChevronRight, User 
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";

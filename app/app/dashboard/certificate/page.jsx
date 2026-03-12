@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Download, ExternalLink, Calendar, ShieldCheck, Mail, Info, X } from "lucide-react";
+import { Award, Download, ExternalLink, Calendar, X,ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useState, useEffect } from "react";
@@ -107,7 +107,7 @@ export default function CertificatePage() {
 
                 <AnimatePresence>
                     {selectedCert && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8">
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedCert(null)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -153,21 +153,6 @@ export default function CertificatePage() {
                                                 <div className="flex items-center gap-3 text-sm font-bold text-gray-900 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                                                     <Calendar className="w-5 h-5 text-gray-400" />
                                                     {selectedCert.issuedDate}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Issued By</label>
-                                                <div className="flex items-center gap-3 text-sm font-bold text-gray-900 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                                                    <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                                                        <ShieldCheck className="w-4 h-4" />
-                                                    </div>
-                                                    {selectedCert.issuer}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Status</label>
-                                                <div className="flex items-center gap-2 text-sm font-bold text-emerald-600 bg-emerald-50 p-4 rounded-2xl border border-emerald-100 shadow-sm uppercase tracking-wider">
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Valid Status
                                                 </div>
                                             </div>
                                         </div>

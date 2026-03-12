@@ -1,6 +1,6 @@
 "use client";
 
-import { Sun, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { Sun, ChevronRight, ChevronLeft, Check, Upload, FileText } from "lucide-react";
 import Link from "next/link";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
@@ -15,9 +15,9 @@ export default function RegistrationPage() {
     const totalSteps = 6;
 
     const prices = {
-        "3-months": "2,999",
-        "4-months": "3,999",
-        "6-months": "5,999"
+        "3-months": "12,000",
+        "4-months": "16,000",
+        "6-months": "24,000"
     };
 
     const [formData, setFormData] = useState({
@@ -33,17 +33,51 @@ export default function RegistrationPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleFileUpload = (e, fieldName) => {
+    const handleFileUpload = async (e, fieldName) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            toast.error("File size must be under 2MB");
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("File size must be under 5MB");
             e.target.value = null;
             return;
         }
-        const reader = new FileReader();
-        reader.onloadend = () => setFormData(prev => ({ ...prev, [fieldName]: reader.result }));
-        reader.readAsDataURL(file);
+
+        // Map internal names to API folders
+        const typeMap = {
+            'passportPhoto': 'profile_photo',
+            'aadhaarCard': 'Aadhar',
+            'resumeDocument': 'resume'
+        };
+
+        const loadingToast = toast.loading(`Uploading ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}...`);
+
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append("file", file);
+            uploadFormData.append("type", typeMap[fieldName] || fieldName);
+            uploadFormData.append("email", formData.email || "anonymous");
+
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: uploadFormData,
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setFormData(prev => ({ ...prev, [fieldName]: data.url }));
+                toast.success("File uploaded successfully");
+            } else {
+                throw new Error(data.message || "Upload failed");
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error("File upload failed. Please try again.");
+            e.target.value = null;
+        } finally {
+            toast.dismiss(loadingToast);
+        }
     };
 
     useEffect(() => {
@@ -66,8 +100,8 @@ export default function RegistrationPage() {
         if (step === 3 && (!formData.aadhaarNumber || !formData.passportPhoto || !formData.aadhaarCard)) {
             toast.error("Please provide Aadhaar and upload both verification documents."); return;
         }
-        if (step === 4 && (!formData.educationQualification || !formData.courseName || !formData.resumeDocument)) {
-            toast.error("Please fill in at least Qualification, Course, and upload CV."); return;
+        if (step === 4 && (!formData.educationQualification || !formData.courseName)) {
+            toast.error("Please fill in at least Qualification and Course."); return;
         }
         if (step === 5 && (!formData.track || !formData.duration)) {
             toast.error("Please select a track and duration."); return;
@@ -86,31 +120,114 @@ export default function RegistrationPage() {
     };
 
     const handlePayment = async () => {
-        const loadingToast = toast.loading("Processing Registration...");
+        if (!formData.resumeDocument) {
+            toast.error("Please upload your CV / Resume before proceeding to payment.");
+            return;
+        }
+        const amountStr = prices[formData.duration];
+        if (!amountStr) {
+            toast.error("Invalid duration selected.");
+            return;
+        }
+
+        const amount = parseInt(amountStr.replace(",", ""));
+        const loadingToast = toast.loading("Initializing Payment...");
 
         try {
-            const response = await fetch("/api/register", {
+            // 1. Create Order
+            const orderRes = await fetch("/api/razorpay/order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({ amount, receipt: `reg_${formData.email}` }),
             });
 
-            if (response.ok) {
-                toast.dismiss(loadingToast);
-                toast.success("Registration Successful! Please log in.");
+            if (!orderRes.ok) throw new Error("Could not create payment order.");
+            const order = await orderRes.json();
+            toast.dismiss(loadingToast);
 
-                setTimeout(() => {
-                    window.location.href = "/login";
-                }, 1500);
-            } else {
-                toast.dismiss(loadingToast);
-                const errorData = await response.json();
-                toast.error(errorData.message || "Registration Failed");
-            }
+            // 2. Open Razorpay Modal
+            const options = {
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: order.amount,
+                currency: order.currency,
+                name: "Internship Portal",
+                description: `Registration for ${formData.track} - ${formData.duration}`,
+                order_id: order.id,
+                handler: async function (response) {
+                    const verifyToast = toast.loading("Verifying Payment...");
+
+                    try {
+                        // 3. Verify Payment
+                        const verifyRes = await fetch("/api/razorpay/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                            }),
+                        });
+
+                        if (verifyRes.ok) {
+                            toast.dismiss(verifyToast);
+                            const finalLoading = toast.loading("Finalizing Registration...");
+
+                            // 4. Final Registration
+                            const regRes = await fetch("/api/register", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    ...formData,
+                                    paymentId: response.razorpay_payment_id,
+                                    orderId: response.razorpay_order_id
+                                }),
+                            });
+
+                            if (regRes.ok) {
+                                toast.dismiss(finalLoading);
+                                toast.success("Registration Successful! Redirecting to dashboard...");
+
+                                // Direct login: Store credentials and redirect
+                                localStorage.setItem('userEmail', formData.email);
+                                localStorage.setItem('userRole', 'intern');
+                                localStorage.setItem('userName', formData.fullName);
+
+                                setTimeout(() => { window.location.href = "/dashboard"; }, 1500);
+                            } else {
+                                toast.dismiss(finalLoading);
+                                const errorData = await regRes.json();
+                                toast.error(errorData.message || "Account creation failed. Contact support with payment ID.");
+                            }
+                        } else {
+                            toast.dismiss(verifyToast);
+                            toast.error("Payment verification failed.");
+                        }
+                    } catch (err) {
+                        toast.dismiss(verifyToast);
+                        console.error(err);
+                        toast.error("An error occurred during verification.");
+                    }
+                },
+                prefill: {
+                    name: formData.fullName,
+                    email: formData.email,
+                    contact: formData.phone,
+                },
+                theme: { color: "#000000" },
+                modal: {
+                    ondismiss: function () {
+                        toast.error("Payment cancelled.");
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+
         } catch (error) {
             toast.dismiss(loadingToast);
-            console.error("Registration Error:", error);
-            toast.error("An error occurred. Please try again.");
+            console.error("Payment Error:", error);
+            toast.error(error.message || "Failed to initiate payment.");
         }
     };
 
@@ -352,16 +469,6 @@ export default function RegistrationPage() {
                                         className="w-full text-black px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Upload CV / Resume</label>
-                                    <input
-                                        type="file"
-                                        accept="application/pdf"
-                                        onChange={(e) => handleFileUpload(e, 'resumeDocument')}
-                                        required
-                                        className="w-full text-black px-4 py-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer text-sm"
-                                    />
-                                </div>
                             </div>
                         )}
 
@@ -389,7 +496,7 @@ export default function RegistrationPage() {
                                     >
                                         <option value="">Select a Track</option>
                                         <option value="Web Development">Web Development</option>
-                                        <option value="App Development (NextJS, Flutter)">App Development (NextJS, Flutter)</option>
+                                        <option value="App Development (React Native, Flutter)">App Development (React Native, Flutter)</option>
                                         <option value="Blockchain/Web3">Blockchain/Web3</option>
                                         <option value="Gen AI">Gen AI</option>
                                         <option value="AI/ML">AI/ML</option>
@@ -428,7 +535,7 @@ export default function RegistrationPage() {
                                                 type="button"
                                                 onClick={() => handleChange({ target: { name: 'duration', value: duration } })}
                                                 className={`w-full py-4 px-2 rounded-xl border transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2
-                                                        ${formData.duration === duration
+                                                            ${formData.duration === duration
                                                         ? 'bg-black text-white border-black shadow-lg scale-[1.02]'
                                                         : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                                                     }`}
@@ -467,7 +574,55 @@ export default function RegistrationPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-blue-50 p-4 rounded-lg flex items-start gap-3 border border-blue-100">
+                                {/* Resume Upload Section - Directly before payment info */}
+                                <div className={`p-6 rounded-2xl border-2 transition-all ${formData.resumeDocument ? 'bg-emerald-50/50 border-emerald-100' : 'bg-orange-50/50 border-orange-100 border-dashed'}`}>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-xl ${formData.resumeDocument ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
+                                                <FileText className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black text-gray-900 uppercase tracking-tight">Professional Resume</h4>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Please upload your CV (PDF only)</p>
+                                            </div>
+                                        </div>
+                                        {formData.resumeDocument && (
+                                            <div className="bg-emerald-500 text-white p-1 rounded-full">
+                                                <Check className="w-3 h-3" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept="application/pdf"
+                                            onChange={(e) => handleFileUpload(e, 'resumeDocument')}
+                                            className="hidden"
+                                            id="resume-final-upload"
+                                        />
+                                        <label
+                                            htmlFor="resume-final-upload"
+                                            className={`flex items-center justify-center gap-3 w-full py-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${formData.resumeDocument
+                                                ? 'bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                                                : 'bg-white border-orange-200 text-orange-700 hover:bg-orange-50'
+                                                }`}
+                                        >
+                                            <Upload className="w-4 h-4" />
+                                            <span className="text-[11px] font-black uppercase tracking-[0.1em]">
+                                                {formData.resumeDocument ? 'Update / Change Resume' : 'Choose Resume File'}
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    {formData.resumeDocument && (
+                                        <p className="text-[10px] font-bold text-emerald-600 mt-3 flex items-center gap-2 px-1">
+                                            <Check className="w-3 h-3" /> Successfully linked to your profile
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="bg-blue-50 p-4 rounded-xl flex items-start gap-3 border border-blue-100">
                                     <div className="bg-blue-100 p-1 rounded-full text-blue-600 mt-0.5">
                                         <Check className="w-4 h-4" />
                                     </div>
@@ -480,7 +635,7 @@ export default function RegistrationPage() {
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className={`grid grid-cols-3 gap-4 pt-8 max-w-2xl mx-auto w-full`}>
+                    <div className={`grid grid-cols-3 gap-4 pt-8 max-w-2xl mx-auto w-full flex-shrink-0`}>
                         {step > 1 ? (
                             <button
                                 type="button"
@@ -518,8 +673,8 @@ export default function RegistrationPage() {
                         </Link>
                     </p>
                 </form>
-            </div >
+            </div>
             <Script src="https://checkout.razorpay.com/v1/checkout.js" />
-        </div >
+        </div>
     );
 }

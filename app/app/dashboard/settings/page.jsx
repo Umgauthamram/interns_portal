@@ -3,7 +3,7 @@
 import {
     Mail, Phone, MapPin, Calendar, Briefcase,
     Clock, Laptop, ShieldCheck, Lock, X, Check, Smile,
-    Upload, Camera, Image as ImageIcon
+    Upload, Camera, Image as ImageIcon, CreditCard, Fingerprint, FileCheck
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
@@ -79,16 +79,37 @@ export default function SettingsPage() {
         finally { setSavingAvatar(false); }
     };
 
-    const handleSavePhoto = async (base64) => {
+    const handleSavePhoto = async (base64OrUrl) => {
         setSavingAvatar(true);
         try {
+            let finalUrl = base64OrUrl;
+
+            // If it's a base64 (from camera or old preview), upload to R2 first
+            if (base64OrUrl.startsWith('data:')) {
+                const blob = await (await fetch(base64OrUrl)).blob();
+                const file = new File([blob], `${user.fullName?.replace(/\s+/g, '_')}_profile.jpg`, { type: 'image/jpeg' });
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', 'profile');
+                formData.append('email', user.email);
+
+                const upRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (upRes.ok) {
+                    const { url } = await upRes.json();
+                    finalUrl = url;
+                }
+            }
+
             const res = await fetch('/api/user/me', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email, profilePic: base64, avatarSeed: '' })
+                body: JSON.stringify({ email: user.email, profilePic: finalUrl, avatarSeed: '' })
             });
             if (res.ok) {
-                setUser(prev => ({ ...prev, profilePicture: base64, avatarSeed: '' }));
+                setUser(prev => ({ ...prev, profilePicture: finalUrl, avatarSeed: '' }));
                 setChosenSeed(user.fullName?.split(' ')[0] || 'User');
                 toast.success('Profile photo updated!');
                 closePickerClean();
@@ -98,6 +119,42 @@ export default function SettingsPage() {
             }
         } catch { toast.error('Error saving photo.'); }
         finally { setSavingAvatar(false); }
+    };
+
+    const handleIdUpload = async (file, type) => {
+        const loadingToast = toast.loading(`Uploading ${type === 'aadhaarCard' ? 'Aadhaar' : 'Photo'}...`);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', type === 'aadhaarCard' ? 'aadhaar' : 'passport');
+            formData.append('email', user.email);
+
+            const upRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (upRes.ok) {
+                const { url } = await upRes.json();
+                const res = await fetch('/api/user/me', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email, [type]: url })
+                });
+
+                if (res.ok) {
+                    setUser(prev => ({ ...prev, [type]: url }));
+                    toast.success('Document uploaded successfully!', { id: loadingToast });
+                } else {
+                    toast.error('Failed to update profile.', { id: loadingToast });
+                }
+            } else {
+                toast.error('Upload failed.', { id: loadingToast });
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Processing error.', { id: loadingToast });
+        }
     };
 
     const closePickerClean = () => {
@@ -274,6 +331,102 @@ export default function SettingsPage() {
                         <Lock className="w-5 h-5 group-hover/btn:-rotate-12 transition-transform" />
                         Update Password
                     </button>
+                </div>
+            </div>
+
+            {/* ── ID Verification Section ── */}
+            <div className="bg-white rounded-[2rem] p-10 shadow-xl border border-gray-100 space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <Fingerprint className="w-32 h-32 -mr-10 -mt-10" />
+                </div>
+                <div className="relative z-10">
+                    <h3 className="text-2xl font-black text-gray-900 tracking-tighter uppercase mb-2 flex items-center gap-3">
+                        <ShieldCheck className="w-6 h-6 text-emerald-500" /> Identity Verification
+                    </h3>
+                    <p className="text-gray-400 text-sm font-medium">Please upload valid identity documents to activate your internship profile.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                    {/* Aadhaar Card */}
+                    <div className="group bg-gray-50 border border-gray-100 rounded-3xl p-6 hover:bg-white hover:shadow-xl transition-all">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                                <Fingerprint className="w-6 h-6 text-blue-500" />
+                            </div>
+                            {user.aadhaarCard ? (
+                                <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                                    <Check className="w-3 h-3" /> Verified Secure
+                                </span>
+                            ) : (
+                                <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase rounded-lg border border-amber-100">
+                                    Pending Upload
+                                </span>
+                            )}
+                        </div>
+                        <h4 className="text-sm font-black uppercase tracking-tight text-gray-900 mb-2">Aadhaar Card (Front/Back)</h4>
+                        <p className="text-xs text-gray-400 font-medium mb-6">Clear photo of your Aadhaar card for KYC verification.</p>
+
+                        {user.aadhaarCard ? (
+                            <div className="relative aspect-video rounded-2xl overflow-hidden border border-gray-100 mb-4 bg-white group/img">
+                                <img src={user.aadhaarCard} className="w-full h-full object-cover" alt="Aadhaar" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                    <label className="bg-white text-black px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:scale-105 active:scale-95 transition-all">
+                                        Update Proof
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleIdUpload(e.target.files[0], 'aadhaarCard')} />
+                                    </label>
+                                </div>
+                            </div>
+                        ) : (
+                            <label className="w-full flex flex-col items-center justify-center p-8 bg-white border-2 border-dashed border-gray-200 rounded-2xl hover:border-black hover:bg-gray-50 transition-all cursor-pointer group/label">
+                                <Upload className="w-6 h-6 text-gray-300 group-hover/label:text-black mb-2" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Click to upload</span>
+                                <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleIdUpload(e.target.files[0], 'aadhaarCard')} />
+                            </label>
+                        )}
+                    </div>
+
+                    {/* Intern Identity Photo */}
+                    <div className="group bg-gray-50 border border-gray-100 rounded-3xl p-6 hover:bg-white hover:shadow-xl transition-all">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                                <Camera className="w-6 h-6 text-indigo-500" />
+                            </div>
+                            {user.passportPhoto ? (
+                                <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded-lg border border-indigo-100 flex items-center gap-1.5">
+                                    <FileCheck className="w-3 h-3" /> Digital Photo
+                                </span>
+                            ) : (
+                                <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase rounded-lg border border-amber-100">
+                                    Required
+                                </span>
+                            )}
+                        </div>
+                        <h4 className="text-sm font-black uppercase tracking-tight text-gray-900 mb-2">Formal Profile Photo</h4>
+                        <p className="text-xs text-gray-400 font-medium mb-6">A clear formal headshot for identity and certificate generation.</p>
+
+                        {user.passportPhoto ? (
+                            <div className="relative aspect-video rounded-2xl overflow-hidden border border-gray-100 mb-4 bg-white group/img">
+                                <img src={user.passportPhoto} className="w-full h-full object-cover" alt="ID Photo" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                    <button onClick={() => { setPickerTab('camera'); setShowAvatarPicker(true); startCamera(); }} className="bg-white text-black px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">
+                                        Open Camera
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex gap-3">
+                                <button onClick={() => { setPickerTab('camera'); setShowAvatarPicker(true); startCamera(); }} className="flex-1 flex flex-col items-center justify-center p-8 bg-white border border-gray-100 rounded-2xl hover:border-black transition-all group/btn">
+                                    <Camera className="w-6 h-6 text-gray-300 group-hover/btn:text-black mb-2" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-center">Capture Live</span>
+                                </button>
+                                <label className="flex-1 flex flex-col items-center justify-center p-8 bg-white border border-gray-100 rounded-2xl hover:border-black transition-all cursor-pointer group/label">
+                                    <Upload className="w-6 h-6 text-gray-300 group-hover/label:text-black mb-2" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-center">Upload File</span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleIdUpload(e.target.files[0], 'passportPhoto')} />
+                                </label>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

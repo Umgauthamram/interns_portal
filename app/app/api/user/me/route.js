@@ -52,6 +52,10 @@ export async function PUT(req) {
             updateData.avatarSeed = (avatarSeed && avatarSeed.length > 0) ? avatarSeed : null;
         }
 
+        // Handle specific document fields
+        if (data.aadhaarCard !== undefined) updateData.aadhaarCard = data.aadhaarCard;
+        if (data.passportPhoto !== undefined) updateData.passportPhoto = data.passportPhoto;
+
         const updatedUser = await User.findOneAndUpdate(
             { email },
             { $set: updateData },

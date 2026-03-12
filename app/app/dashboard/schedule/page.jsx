@@ -23,6 +23,8 @@ export default function InternSchedulePage() {
                 } catch (err) {
                     console.error("Failed to fetch schedule data:", err);
                 }
+            } else {
+                console.warn("User email not found in localStorage — cannot fetch schedule.");
             }
             setLoading(false);
         };
@@ -31,9 +33,12 @@ export default function InternSchedulePage() {
 
     const calendarData = Object.values(
         schedules.reduce((acc, schedule) => {
-            const dateObj = new Date(schedule.date);
-            const dayKey = dateObj.toISOString().split('T')[0];
-            if (!acc[dayKey]) acc[dayKey] = { day: dateObj, events: [] };
+            const d = new Date(schedule.date);
+            // Fix timezone shift: Mongo stores UTC, we want to show it on the same day locally
+            const localDate = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+            const dayKey = d.toISOString().split('T')[0];
+
+            if (!acc[dayKey]) acc[dayKey] = { day: localDate, events: [] };
             acc[dayKey].events.push({
                 id: schedule._id,
                 name: `Admin`,
@@ -71,8 +76,8 @@ export default function InternSchedulePage() {
                     <button
                         onClick={() => setViewMode("calendar")}
                         className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-left ${viewMode === 'calendar'
-                                ? 'bg-black text-white shadow-md'
-                                : 'text-gray-400 hover:bg-gray-100 hover:text-gray-800'
+                            ? 'bg-black text-white shadow-md'
+                            : 'text-gray-400 hover:bg-gray-100 hover:text-gray-800'
                             }`}
                     >
                         <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -81,8 +86,8 @@ export default function InternSchedulePage() {
                     <button
                         onClick={() => setViewMode("list")}
                         className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-left ${viewMode === 'list'
-                                ? 'bg-black text-white shadow-md'
-                                : 'text-gray-400 hover:bg-gray-100 hover:text-gray-800'
+                            ? 'bg-black text-white shadow-md'
+                            : 'text-gray-400 hover:bg-gray-100 hover:text-gray-800'
                             }`}
                     >
                         <LayoutList className="w-3.5 h-3.5 shrink-0" />

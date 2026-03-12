@@ -125,8 +125,7 @@ export default function StudentDashboard() {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Mock data for immediate UX feedback (normally fetched)
-    const nextReviewDate = "March 12, 2026 at 4:00 PM";
+    const [nextSync, setNextSync] = useState(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -134,10 +133,11 @@ export default function StudentDashboard() {
             if (!email) return;
 
             try {
-                const [userRes, projectsRes, ticketsRes] = await Promise.all([
+                const [userRes, projectsRes, ticketsRes, scheduleRes] = await Promise.all([
                     fetch(`/api/user/me?email=${email}`),
                     fetch(`/api/projects?email=${email}`),
-                    fetch(`/api/tickets`)
+                    fetch(`/api/tickets`),
+                    fetch(`/api/schedule?role=intern&email=${email}`)
                 ]);
 
                 if (userRes.ok) {
@@ -160,6 +160,20 @@ export default function StudentDashboard() {
                     const ticketsData = await ticketsRes.json();
                     if (Array.isArray(ticketsData)) {
                         setTickets(ticketsData.filter(t => t.reportedBy === email));
+                    }
+                }
+                if (scheduleRes.ok) {
+                    const scheduleData = await scheduleRes.json();
+                    if (Array.isArray(scheduleData)) {
+                        const now = new Date();
+                        const upcoming = scheduleData
+                            .map(s => ({ ...s, dateObj: new Date(s.date) }))
+                            .filter(s => s.dateObj >= new Date(now.setHours(0, 0, 0, 0)))
+                            .sort((a, b) => a.dateObj - b.dateObj);
+
+                        if (upcoming.length > 0) {
+                            setNextSync(upcoming[0]);
+                        }
                     }
                 }
             } catch (error) {
@@ -579,22 +593,31 @@ export default function StudentDashboard() {
 
                                 <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-4 flex flex-col items-center justify-center text-center flex-1 min-h-[140px]">
                                     <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Next Sync</p>
-                                    <p className="text-xl font-bold text-gray-900 mb-3 truncate">End-of-Sprint</p>
-                                    <div className="flex items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
-                                        <Timer className="w-4 h-4" /> 6 days left
-                                    </div>
+                                    <p className="text-xl font-bold text-gray-900 mb-3 truncate">
+                                        {nextSync ? (nextSync.description?.slice(0, 20) || 'Admin Review') : 'No Upcoming Sync'}
+                                    </p>
+                                    {nextSync ? (
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="flex items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
+                                                <Calendar className="w-4 h-4" />
+                                                {new Date(nextSync.date).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })} at {nextSync.time}
+                                            </div>
+                                            {(() => {
+                                                const diff = Math.ceil((new Date(nextSync.date) - new Date()) / (1000 * 60 * 60 * 24));
+                                                return diff > 0 && (
+                                                    <p className="text-[10px] font-black uppercase text-gray-400">
+                                                        {diff === 1 ? 'Tomorrow' : `${diff} days left`}
+                                                    </p>
+                                                );
+                                            })()}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm font-medium text-gray-400">Schedule will appear here</p>
+                                    )}
                                 </div>
                             </div>
 
-                            <div>
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <span className="text-[12px] font-medium text-gray-600">Compliance</span>
-                                    <span className={`text-[12px] font-bold ${missedReviews === 0 ? 'text-emerald-600' : 'text-amber-600'}`}>{100 - (missedReviews * 20)}%</span>
-                                </div>
-                                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${missedReviews === 0 ? 'bg-emerald-500' : missedReviews >= 2 ? 'bg-red-500' : 'bg-amber-500'}`} style={{ width: `${100 - (missedReviews * 20)}%` }} />
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </motion.div>

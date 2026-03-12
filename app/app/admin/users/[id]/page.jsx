@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-    ArrowLeft, Mail, Calendar, Phone, Award, Activity,
+    ArrowLeft, Mail, Calendar, Phone, Award, Activity,User ,
     CheckCircle, RefreshCw, UserCog, ChevronDown, ShieldOff, ShieldCheck, X, AlertTriangle,
     Github, ExternalLink
 } from "lucide-react";
